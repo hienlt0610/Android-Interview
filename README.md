@@ -257,8 +257,5 @@
 
 ## 解答篇
 
-由于知识点涉及较广，因此将解答篇分为上中下三篇，稍后呈上
+* [Android解答篇](https://github.com/Ye-Miao/Android-Interview/blob/master/Android%E8%A7%A3%E7%AD%94%E7%AF%87.md)
 
-[2019初中级Android开发社招面试解答（上）](https://juejin.im/post/5c8211fee51d453a136e36b0#heading-56)
-
-[2019初中级Android开发社招面试解答（中）](https://juejin.im/post/5c85cead5188257c6703af47)
