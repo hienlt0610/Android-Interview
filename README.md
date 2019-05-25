@@ -1,33 +1,33 @@
 # Android-Interview
->注：因为实际开发与参考答案会有所不同，再者怕误导大家，所以这些面试题答案还是自己去理解！面试官会针对简历中提到的知识点由浅入深提问，所以不要背答案，多理解。
-## Android篇
+> Note: Because the actual development and reference answers will be different, and then afraid to mislead everyone, so the answer to these interview questions is to understand! The interviewer will ask questions about the knowledge points mentioned in the resume, so don't answer the questions and understand more.
+## Android articles
 
 ### Activity
 
-#### 1、说下Activity生命周期 ？
-> + 参考解答：在正常情况下，Activity的常用生命周期就只有如下7个
->   + **onCreate()**：表示Activity**正在被创建**，常用来**初始化工作**，比如调用setContentView加载界面布局资源，初始化Activity所需数据等；
->   + **onRestart()**：表示Activity**正在重新启动**，一般情况下，当前Acitivty从不可见重新变为可见时，OnRestart就会被调用；
->   + **onStart()**：表示Activity**正在被启动**，此时Activity**可见但不在前台**，还处于后台，无法与用户交互；
->   + **onResume()**：表示Activity**获得焦点**，此时Activity**可见且在前台**并开始活动，这是与onStart的区别所在；
->   + **onPause()**：表示Activity**正在停止**，此时可做一些**存储数据、停止动画**等工作，但是不能太耗时，因为这会影响到新Activity的显示，onPause必须先执行完，新Activity的onResume才会执行；
->   + **onStop()**：表示Activity**即将停止**，可以做一些稍微重量级的回收工作，比如注销广播接收器、关闭网络连接等，同样不能太耗时；
->   + **onDestroy()**：表示Activity**即将被销毁**，这是Activity生命周期中的最后一个回调，常做**回收工作、资源释放**；
-> + 延伸：从**整个生命周期**来看，onCreate和onDestroy是配对的，分别标识着Activity的创建和销毁，并且只可能有**一次调用**；
-从Activity**是否可见**来说，onStart和onStop是配对的，这两个方法可能被**调用多次**；
-从Activity**是否在前台**来说，onResume和onPause是配对的，这两个方法可能被**调用多次**；
-除了这种区别，在实际使用中没有其他明显区别；
+#### 1, said the Activity life cycle?
+> + Reference Answer: Under normal circumstances, the common life cycle of Activity is only the following 7
+> + **onCreate()**: Indicates that Activity** is being created**, commonly used to initialize work**, such as calling setContentView to load interface layout resources, initializing the required data for Activity, etc.
+> + **onRestart()**: Indicates that Activity** is restarting**. In general, OnRestart will be called when the current Acitivty is changed from invisible to visible.
+> + **onStart()**: Indicates that Activity** is being started**, Activity** is visible but not in the foreground**, still in the background, unable to interact with the user;
+> + **onResume()**: Indicates that Activity** gets focus**, then Activity** is visible and in the foreground** and starts to be active, which is the difference from onStart;
+> + **onPause()**: Indicates that Activity** is stopping**, you can do some work such as storing data, stopping animation**, etc., but it can't be too time consuming, because it will affect the new Activity. Display, onPause must be executed first, the new Activity's onResume will be executed;
+> + **onStop()**: Indicates that Activity** is about to stop**, you can do some slightly heavyweight recovery work, such as logging out of the broadcast receiver, closing the network connection, etc., also not too time consuming;
+> + **onDestroy()**: Indicates that Activity** is about to be destroyed**, this is the last callback in the Activity lifecycle, often doing **recycling work, resource release**;
+> + Extension: From the ** life cycle **, onCreate and onDestroy are paired, respectively identifying the creation and destruction of the Activity, and only one call **;
+From the fact that Activity** is visible, onStart and onStop are paired, and these two methods may be called multiple times**;
+From the fact that Activity** is in the foreground, onResume and onPause are paired, these two methods may be called multiple times**;
+In addition to this distinction, there are no other significant differences in actual use;
 
-#### 2、Activity A 启动另一个Activity B 会调用哪些方法？如果B是透明主题的又或则是个DialogActivity呢 ？
-> + 参考解答：Activity A 启动另一个Activity B，回调如下
->   + Activity A 的onPause() → Activity B的onCreate() → onStart() → onResume() → Activity A的onStop()；
->   + 如果B是透明主题又或则是个DialogActivity，则不会回调A的onStop；
+#### 2, Activity A will start another Activity B will call which methods? If B is a transparent theme or is it a DialogActivity?
+> + Reference: Activity A starts another Activity B, the callback is as follows
+> + Activity A's onPause() → Activity B's onCreate() → onStart() → onResume() → Activity A's onStop();
+> + If B is a transparent theme or a DialogActivity, then A's onStop will not be called back;
 
-#### 3、说下onSaveInstanceState()方法的作用 ? 何时会被调用？
-> + 参考解答：发生条件：异常情况下（**系统配置发生改变时导致Activity被杀死并重新创建、资源内存不足导致低优先级的Activity被杀死**）
->   + 系统会调用onSaveInstanceState来保存当前Activity的状态，此方法调用在onStop之前，与onPause没有既定的时序关系；
->   + 当Activity被重建后，系统会调用onRestoreInstanceState，并且把onSave(简称)方法所保存的Bundle对象**同时传参**给onRestore(简称)和onCreate()，因此可以通过这两个方法判断Activity**是否被重建**，调用在onStart之后；
-![异常情况下Activity的重建过程](https://user-gold-cdn.xitu.io/2019/3/8/1695c1aaea26f833?w=583&h=381&f=png&s=10238)
+#### 3, say the role of the onSaveInstanceState () method? When will it be called?
+> + Reference Answer: Occurrence condition: Under abnormal circumstances (** When the system configuration changes, the Activity is killed and re-created, the resource memory is insufficient, causing the low-priority Activity to be killed**)
+> + The system will call onSaveInstanceState to save the state of the current Activity. This method is called before onStop and has no established timing relationship with onPause.
+> + When the Activity is rebuilt, the system will call onRestoreInstanceState, and the Bundle object ** saved by the onSave (abbreviation) method will be passed to ** to onRestore (abbreviation) and onCreate(), so it can be judged by these two methods. Whether Activity** is rebuilt**, called after onStart;
+[[Reconstruction of Activity in an Abnormal Situation] (https://user-gold-cdn.xitu.io/2019/3/8/1695c1aaea26f833?w=583&h=381&f=png&s=10238)
 
 #### 4、说下 Activity的四种启动模式、应用场景 ？
 > + 参考回答：
