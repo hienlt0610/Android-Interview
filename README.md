@@ -27,228 +27,228 @@ In addition to this distinction, there are no other significant differences in a
 > + Reference Answer: Occurrence condition: Under abnormal circumstances (** When the system configuration changes, the Activity is killed and re-created, the resource memory is insufficient, causing the low-priority Activity to be killed**)
 > + The system will call onSaveInstanceState to save the state of the current Activity. This method is called before onStop and has no established timing relationship with onPause.
 > + When the Activity is rebuilt, the system will call onRestoreInstanceState, and the Bundle object ** saved by the onSave (abbreviation) method will be passed to ** to onRestore (abbreviation) and onCreate(), so it can be judged by these two methods. Whether Activity** is rebuilt**, called after onStart;
-[[Reconstruction of Activity in an Abnormal Situation] (https://user-gold-cdn.xitu.io/2019/3/8/1695c1aaea26f833?w=583&h=381&f=png&s=10238)
+![Reconstruction of Activity in an Abnormal Situation](https://user-gold-cdn.xitu.io/2019/3/8/1695c1aaea26f833?w=583&h=381&f=png&s=10238)
 
-#### 4、说下 Activity的四种启动模式、应用场景 ？
-> + 参考回答：
->   + **standard标准模式**：每次启动一个Activity都会重新创建一个新的实例，不管这个实例是否已经存在，此模式的Activity默认会进入启动它的Activity所属的任务栈中；
->   + **singleTop栈顶复用模式**：如果新Activity已经位于任务栈的栈顶，那么此Activity不会被重新创建，同时会回调**onNewIntent**方法，如果新Activity实例已经存在但不在栈顶，那么Activity依然会被重新创建；
->   + **singleTask栈内复用模式**：只要Activity在一个任务栈中存在，那么多次启动此Activity都不会重新创建实例，并回调**onNewIntent**方法，此模式启动Activity A，系统首先会寻找是否存在A想要的任务栈，如果不存在，就会重新创建一个任务栈，然后把创建好A的实例放到栈中；
->   + **singleInstance单实例模式**：这是一种加强的singleTask模式，具有此种模式的Activity只能单独地位于一个任务栈中，且此任务栈中只有唯一一个实例；
+#### 4, say the four startup modes and application scenarios of Activity?
+> + Reference answer:
+> + **standard standard mode**: Each time an Activity is started, a new instance will be re-created. Regardless of whether the instance already exists, the Activity of this mode will enter the task stack to which the Activity that started it belongs by default.
+> + **singleTop stack top reuse mode**: If the new Activity is already at the top of the stack of the task stack, then the Activity will not be recreated, and the **onNewIntent** method will be called back if the new Activity instance already exists but Not at the top of the stack, the Activity will still be recreated;
+> + **singleTask stack reuse mode**: As long as the Activity exists in a task stack, then launching this Activity multiple times will not re-create the instance, and callback **onNewIntent** method, this mode starts Activity A, The system first looks for the existence of the desired task stack, if it does not exist, it will re-create a task stack, and then put the instance of the created A on the stack;
+> + **singleInstance single instance mode**: This is an enhanced singleTask mode. Activities with this mode can only be located in a single task stack, and there is only one instance in this task stack;
 
-#### 5、了解哪些Activity常用的标记位Flags？
-> + **FLAG_ACTIVITY_NEW_TASK :** 对应singleTask启动模式，其效果和在XML中指定该启动模式相同；
-> + **FLAG_ACTIVITY_SINGLE_TOP :** 对应singleTop启动模式，其效果和在XML中指定该启动模式相同；
-> + **FLAG_ACTIVITY_CLEAR_TOP :** 具有此标记位的Activity，当它启动时，在同一个任务栈中所有位于它上面的Activity都要出栈。这个标记位一般会和singleTask模式一起出现，在这种情况下，被启动Activity的实例如果已经存在，那么系统就会回调onNewIntent。如果被启动的Activity采用standard模式启动，那么它以及连同它之上的Activity都要出栈，系统会创建新的Activity实例并放入栈中；
-> + **FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS :** 具有这个标记的 Activity 不会出现在历史 Activity 列表中；
+#### 5, understand which Activity flag flag Flags?
+> + **FLAG_ACTIVITY_NEW_TASK :** Corresponds to the singleTask startup mode, the effect is the same as specifying the startup mode in XML;
+> + **FLAG_ACTIVITY_SINGLE_TOP :** Corresponds to the singleTop startup mode, the effect is the same as specifying the startup mode in XML;
+> + **FLAG_ACTIVITY_CLEAR_TOP :** Activity with this flag bit, when it starts, all the activities above it in the same task stack will be popped. This flag bit will generally appear with the singleTask pattern. In this case, if the instance of the started Activity already exists, the system will call back onNewIntent. If the activated activity is started in standard mode, then it and the Activity above it will be popped, the system will create a new Activity instance and put it into the stack;
+> + **FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS :** Activities with this tag will not appear in the history Activity list;
 
-#### 6、说下 Activity跟window，view之间的关系？
-> + 参考回答：
->   + Activity在创建时会调用 **attach()** 方法初始化一个**PhoneWindow(继承于Window)**，**每一个Activity都包含了唯一一个PhoneWindow**
->   + Activity通过**setContentView**实际上是调用的 **getWindow().setContentView**将View设置到PhoneWindow上，而PhoneWindow内部是通过 **WindowManager** 的**addView**、**removeView**、**updateViewLayout**这三个方法来管理View，**WindowManager本质是接口，最终由WindowManagerImpl实现**
-> + 延伸
->   + **WindowManager**为每个**Window**创建**Surface**对象，然后应用就可以通过这个**Surface**来绘制任何它想要绘制的东西。而对于**WindowManager**来说，这只不过是一块矩形区域而已
->     + **Surface**其实就是一个持有像素点矩阵的对象，这个像素点矩阵是组成显示在屏幕的图像的一部分。我们看到显示的每个**Window**（包括对话框、全屏的**Activity**、状态栏等）都有他自己绘制的**Surface**。而最终的显示可能存在**Window**之间遮挡的问题，此时就是通过**SurfaceFlinger**对象渲染最终的显示，使他们以正确的**Z-order**显示出来。一般**Surface**拥有一个或多个缓存（一般2个），通过双缓存来刷新，这样就可以一边绘制一边加新缓存。
->   + **View**是**Window**里面用于交互的**UI**元素。**Window**只**attach**一个**View Tree（组合模式）**，当**Window**需要重绘（如，当**View**调用**invalidate**）时，最终转为**Window**的**Surface**，**Surface**被锁住（**locked**）并返回**Canvas**对象，此时**View**拿到**Canvas**对象来绘制自己。当所有**View**绘制完成后，**Surface**解锁（**unlock**），并且**post**到绘制缓存用于绘制，通过**Surface Flinger**来组织各个**Window**，显示最终的整个屏幕
-> + 推荐文章：
->   + [Activity、View、Window的理解一篇文章就够了](https://blog.csdn.net/zane402075316/article/details/69822438)
+#### 6. What is the relationship between Activity and window, view?
+> + Reference answer:
+> + Activity will be called when created **attach () ** method initializes a **PhoneWindow (inherited from Window) **, ** each Activity contains a unique PhoneWindow**
+> + Activity **setContentView** is actually called **getWindow().setContentView** to set the View to PhoneWindow, and PhoneWindow is internally **addView**, **removeView by **WindowManager** **, **updateViewLayout** These three methods to manage the View, **WindowManager is essentially an interface, and finally implemented by WindowManagerImpl**
+> + extension
+> + **WindowManager** creates a **Surface** object for each **Window**, and the application can then draw whatever it wants to draw with this **Surface**. For **WindowManager**, this is just a rectangular area.
+> + **Surface** is actually an object holding a matrix of pixels, which is part of the image that is displayed on the screen. We see that each **Window** displayed (including dialogs, full-screen **Activity**, status bar, etc.) has its own **Surface**. The final display may have occlusion problems between **Window**, which is to render the final display through the **SurfaceFlinger** object, so that they are displayed with the correct **Z-order**. In general, **Surface** has one or more caches (generally 2), which are refreshed by double buffering, so that you can add a new cache while drawing.
+> + **View** is the **UI** element for interaction in **Window**. **Window** only **attach** a **View Tree**, when **Window** needs to be redrawn (eg, when **View** calls **invalidate**) Eventually converted to **Window** **Surface**, **Surface** is locked (**locked**) and returns **Canvas** object, at this time **View** get ** Canvas** object to draw yourself. When all **View** is drawn, **Surface** is unlocked (**unlock**), and **post** is drawn to the drawing cache for drawing, and **Surface Flinger** is used to organize each ** Window**, showing the final entire screen
+> + Recommended articles:
+>   + [An article on Activity, View, and Window is enough.](https://blog.csdn.net/zane402075316/article/details/69822438)
 
-#### 7、横竖屏切换的Activity生命周期变化？
-> + 参考回答：
->   + **不设置**Activity的android:configChanges时，切屏会销毁当前Activity，然后重新加载调用各个生命周期，切横屏时会执行一次，切竖屏时会执行两次；
+#### 7. What is the change in the life cycle of the horizontal and vertical screens?
+> + Reference answer:
+> + **Do not set **Activity android:configChanges, the cut screen will destroy the current Activity, and then reload the call each life cycle, will be executed once when cutting the horizontal screen, will be executed twice when cutting the vertical screen;
 onPause() →onStop()→onDestory()→onCreate()→onStart()→onResume()
->   + 设置Activity的android:configChanges="**orientation**"，经过机型测试
->     + **在Android5.1 即API 23级别下**，切屏还是会重新调用各个生命周期，切横、竖屏时只会执行一次
->     + **在Android9 即API 28级别下**，切屏不会重新调用各个生命周期，只会执行onConfigurationChanged方法
->     + **[后经官方查正](https://developer.android.com/guide/topics/manifest/activity-element)**，原话如下
->       + 如果您的应用面向**Android 3.2即API 级别 13**或更高级别（按照 minSdkVersion 和 targetSdkVersion 属性所声明的级别），则还应声明 "screenSize" 配置，因为当设备在横向与纵向之间切换时，该配置也会发生变化。即便是在 Android 3.2 或更高版本的设备上运行，此配置变更也不会重新启动 Activity
->   + 设置Activity的android:configChanges="**orientation|keyboardHidden|screenSize**"时，机型测试通过，切屏不会重新调用各个生命周期，只会执行onConfigurationChanged方法；
-> + 推荐文章：
->   + [Android 横竖屏切换加载不同的布局](https://blog.csdn.net/u010365819/article/details/76618443)
+> + Set the android:configChanges="**orientation**" of the Activity, after the model test
+> + ** Under Android 5.1, API 23 level, the screen will still recall each life cycle, only once when cutting horizontally and vertically.
+> + ** Under Android9 ie API 28 level, the cut screen will not recall each life cycle, only the onConfigurationChanged method will be executed.
+> + **[After official check] (https://developer.android.com/guide/topics/manifest/activity-element)**, the original words are as follows
+> + If your app targets **Android 3.2 ie API level 13** or higher (as declared by the minSdkVersion and targetSdkVersion properties), then the "screenSize" configuration should also be declared because when the device is in landscape and portrait orientation This configuration also changes when switching between. This configuration change will not restart the activity even if it is running on Android 3.2 or higher.
+> + When setting the android:configChanges="**orientation|keyboardHidden|screenSize**" of the Activity, the model test passes, the cut screen will not recall each life cycle, only the onConfigurationChanged method will be executed;
+> + Recommended articles:
+>   + [Android horizontal and vertical screen switch to load different layouts](https://blog.csdn.net/u010365819/article/details/76618443)
 
-#### 8、如何启动其他应用的Activity？
-> + 参考回答：
->   + 在保证有权限访问的情况下，通过隐式Intent进行目标Activity的IntentFilter匹配，原则是：
->       + 一个intent只有同时匹配某个Activity的intent-filter中的action、category、data才算完全匹配，才能启动该Activity；
->       + 一个Activity可以有多个 intent-filter，一个 intent只要成功匹配任意一组 intent-filter，就可以启动该Activity；
-> + 推荐文章：
->   + [action、category、data的具体匹配规则](https://blog.csdn.net/sunzhaojie613/article/details/77433994)
+#### 8, how to start the activity of other applications?
+> + Reference answer:
+> + In the case of guaranteed access, the IntentFilter matching of the target Activity through the implicit Intent, the principle is:
+> + An intent only matches the action, category, and data in the intent-filter of an Activity at the same time to complete the match.
+> + An Activity can have multiple intent-filters, an intent can start the Activity as long as it successfully matches any set of intent-filters;
+> + Recommended articles:
+> + [action, category, data specific matching rules] (https://blog.csdn.net/sunzhaojie613/article/details/77433994)
 
-#### 9、Activity的启动过程？(重点)
-> + 参考回答：
->   + **点击App图标后通过startActivity远程调用到AMS中，AMS中将新启动的activity以activityrecord的结构压入activity栈中，并通过远程binder回调到原进程，使得原进程进入pause状态，原进程pause后通知AMS我pause了**
->   + **此时AMS再根据栈中Activity的启动intent中的flag是否含有new_task的标签判断是否需要启动新进程，启动新进程通过startProcessXXX的函数**
->   + **启动新进程后通过反射调用ActivityThread的main函数，main函数中调用looper.prepar和lopper.loop启动消息队列循环机制。最后远程告知AMS我启动了。AMS回调handleLauncherAcitivyt加载activity。在handlerLauncherActivity中会通过反射调用Application的onCreate和activity的onCreate以及通过handleResumeActivity中反射调用Activity的onResume**
+#### 9, Activity startup process? (emphasis)
+> + Reference answer:
+> + **Click the App icon and call it to AMS remotely through startActivity. In AMS, the newly launched activity is pushed into the activity stack by the activityrecord structure, and the remote binder is called back to the original process, so that the original process enters the pause state. After the process pause, notify AMS that I have paused**
+> + ** At this time, AMS then judges whether it needs to start a new process according to whether the flag in the intent of the activity in the stack contains the flag of new_task, and starts the new process through the function of startProcessXXX**
+> + ** After the new process is started, the main function of ActivityThread is called by reflection. The main function calls looper.prepar and lopper.loop to start the message queue loop mechanism. Finally, I told AMS remotely that I started. AMS callback handleLauncherAcitivyt loads the activity. In the handlerLauncherActivity, the OnCreate of the Application and the onCreate of the Activity are called by reflection, and the onResume of the Activity is called by the reflection in the handleResumeActivity.
 ![](https://user-gold-cdn.xitu.io/2019/3/8/1695c1aaec5faf60?w=769&h=581&f=png&s=188283)
-> + 推荐文章：
->   + [Android四大组件启动机制之Activity启动过程](https://blog.csdn.net/qq_30379689/article/details/79611217)
+> + Recommended articles:
+> + [Android four components start mechanism Activity startup process] (https://blog.csdn.net/qq_30379689/article/details/79611217)
 
 ### Fragment
 
-#### 1、谈一谈Fragment的生命周期？
-> + 参考回答：
->   + Fragment从创建到销毁整个生命周期中涉及到的方法依次为：onAttach()→onCreate()→ onCreateView()→onActivityCreated()→onStart()→onResume()→onPause()→onStop()→onDestroyView()→onDestroy()→onDetach()，其中和Activity有不少名称相同作用相似的方法，而不同的方法有:
->      + **onAttach()**：当Fragment和Activity建立关联时调用；
->      + **onCreateView()**：当fragment创建视图调用，在onCreate之后；
->      + **onActivityCreated()**：当与Fragment相关联的Activity完成onCreate()之后调用；
->      + **onDestroyView()**：在Fragment中的布局被移除时调用；
->      + **onDetach()**：当Fragment和Activity解除关联时调用；
-> + 推荐文章：
->   + [Android之Fragment优点](https://www.cnblogs.com/shaweng/p/3918985.html)
+#### 1. Let's talk about the life cycle of Fragment?
+> + Reference answer:
+> + Fragment from the creation to the destruction of the entire life cycle involved in the order: onAttach () → onCreate () → onCreateView () → onActivityCreated () → onStart () → onResume () → onPause () → onStop () → onDestroyView()→onDestroy()→onDetach(), which has a number of similar methods to the Activity, and different methods are:
+> + **onAttach()**: Called when the Fragment is associated with the Activity;
+> + **onCreateView()**: When the fragment creates a view call, after onCreate;
+> + **onActivityCreated()**: Called when the activity associated with the Fragment completes onCreate();
+> + **onDestroyView()**: Called when the layout in the Fragment is removed;
+> + **onDetach()**: Called when the Fragment and Activity are disassociated;
+> + Recommended articles:
+> + [Android Fragment Advantage] (https://www.cnblogs.com/shaweng/p/3918985.html)
 
-#### 2、谈谈Activity和Fragment的区别？
-> + 参考回答：
->   + 相似点：都可包含布局、可有自己的生命周期
->   + 不同点：
->      + Fragment相比较于Activity多出4个回调周期，在控制操作上更灵活；
->      + Fragment可以在XML文件中直接进行写入，也可以在Activity中动态添加；
->      + Fragment可以使用show()/hide()或者replace()随时对Fragment进行切换，并且切换的时候不会出现明显的效果，用户体验会好；Activity虽然也可以进行切换，但是Activity之间切换会有明显的翻页或者其他的效果，在小部分内容的切换上给用户的感觉不是很好；
+#### 2. Talk about the difference between Activity and Fragment?
+> + Reference answer:
+> + Similarities: can include layout, can have their own life cycle
+> + Differences:
+> + Fragment has 4 more callback cycles compared to Activity, which is more flexible in control operations;
+> + Fragment can be written directly in the XML file, or dynamically added in the Activity;
+> + Fragment can use the show()/hide() or replace() to switch the Fragment at any time, and the switching will not have obvious effects, the user experience will be good; although the Activity can also switch, but the Activity switch There will be obvious page turning or other effects, and it is not very good for the user to switch between a small part of the content;
 
-#### 3、Fragment中add与replace的区别（Fragment重叠）
-> + 参考回答：
->   + add不会重新初始化fragment，replace每次都会。所以如果在fragment生命周期内获取获取数据,使用replace会重复获取；
->   + 添加相同的fragment时，replace不会有任何变化，add会报IllegalStateException异常；
->   + replace先remove掉相同id的所有fragment，然后在add当前的这个fragment，而add是覆盖前一个fragment。所以如果使用add一般会伴随hide()和show()，避免布局重叠；
->   + 使用add，如果应用放在后台，或以其他方式被系统销毁，再打开时，hide()中引用的fragment会销毁，所以依然会出现布局重叠bug，可以使用replace或使用add时，添加一个tag参数；
+#### 3, the difference between add and replace in Fragment (Fragment overlap)
+> + Reference answer:
+> + add does not reinitialize fragment, replace every time. So if you get the data in the fragment life cycle, use replace to repeat the acquisition;
+> + When adding the same fragment, replace will not change, add will report IllegalStateException;
+> + replace removes all fragments of the same id first, then adds the current fragment, and add overrides the previous fragment. So if you use add, it will usually be accompanied by hide() and show() to avoid layout overlap;
+> + Use add, if the application is placed in the background, or otherwise destroyed by the system, then open, the fragment referenced in hide() will be destroyed, so there will still be layout overlap bugs, you can use replace or add, add a tag parameter;
 ![](https://user-gold-cdn.xitu.io/2019/3/14/1697b9862e1ce518?w=1800&h=878&f=png&s=215465)
 
-#### 4、getFragmentManager、getSupportFragmentManager 、getChildFragmentManager之间的区别？
-> + 参考回答：
->   + getFragmentManager()所得到的是所在fragment 的**父容器**的管理器，
-getChildFragmentManager()所得到的是在fragment  里面**子容器**的管理器，
-如果是fragment嵌套fragment，那么就需要利用getChildFragmentManager()；
->   + 因为Fragment是3.0 Android系统API版本才出现的组件，所以3.0以上系统可以直接调用getFragmentManager()来获取FragmentManager()对象，而3.0以下则需要调用getSupportFragmentManager() 来间接获取；
+#### 4, the difference between getFragmentManager, getSupportFragmentManager, getChildFragmentManager?
+> + Reference answer:
+> + getFragmentManager() gets the manager of the ** parent container of the fragment,
+getChildFragmentManager() gets the manager of the subcontainer** in the fragment.
+If it is a fragment nested fragment, then you need to use getChildFragmentManager();
+> + Because Fragment is a component that appears in the 3.0 Android system API version, so the system above 3.0 can directly call getFragmentManager() to get the FragmentManager() object, and below 3.0, you need to call getSupportFragmentManager() to get it indirectly;
 
-#### 5、FragmentPagerAdapter与FragmentStatePagerAdapter的区别与使用场景
->  + 参考回答：
->    + 相同点 ：二者都继承PagerAdapter
->    + 不同点 ：**FragmentPagerAdapter**的每个Fragment会持久的保存在FragmentManager中，只要用户可以返回到页面中，它都不会被销毁。因此适用于那些数据**相对静态**的页，Fragment**数量也比较少**的那种；
-**FragmentStatePagerAdapter**只保留当前页面，当页面不可见时，该Fragment就会被消除，释放其资源。因此适用于那些**数据动态性**较大、**占用内存**较多，多Fragment的情况；
+#### 5, the difference between FragmentPagerAdapter and FragmentStatePagerAdapter and usage scenarios
+> + Reference answer:
+> + Same: Both inherit PagerAdapter
+> + Differences: Each Fragment of **FragmentPagerAdapter** is persisted in the FragmentManager and will not be destroyed as long as the user can return to the page. Therefore, it applies to those pages whose data is relatively static**, and the number of Fragment** is also relatively small**;
+**FragmentStatePagerAdapter** only keeps the current page. When the page is not visible, the Fragment will be eliminated and its resources will be released. Therefore, it is suitable for those cases where the ** data dynamics are large, the ** occupies more memory, and the more Fragment;
 
 ### Service
 
-#### 1、谈一谈Service的生命周期？
-> + 参考回答：Service的生命周期涉及到六大方法
->   + **onCreate()**：如果service没被创建过，调用startService()后会执行onCreate()回调；如果service已处于运行中，调用startService()不会执行onCreate()方法。也就是说，onCreate()只会在第一次创建service时候调用，多次执行startService()不会重复调用onCreate()，此方法适合完成一些初始化工作；
->   + **onStartComand()**：服务启动时调用，此方法适合完成一些数据加载工作，比如会在此处创建一个线程用于下载数据或播放音乐；
->   + **onBind()**：服务被绑定时调用；
->   + **onUnBind()**：服务被解绑时调用；
->   + **onDestroy()**：服务停止时调用；
-> + 推荐文章：
->   + [Android组件系列----Android Service组件深入解析](https://www.cnblogs.com/smyhvae/p/4070518.html)
+#### 1. Talk about the life cycle of Service?
+> + Reference Answer: The life cycle of Service involves six methods
+> + **onCreate()**: If the service has not been created, the onCreate() callback will be executed after calling startService(); if the service is already running, calling onService() will not execute the onCreate() method. In other words, onCreate() will only be called when the service is created for the first time. If you execute startService() multiple times, it will not call onCreate() repeatedly. This method is suitable for some initialization work.
+> + **onStartComand()**: Called when the service starts, this method is suitable for some data loading work, such as creating a thread here to download data or play music;
+> + **onBind()**: Called when the service is bound;
+> + **onUnBind()**: Called when the service is unbundled;
+> + **onDestroy()**: Called when the service is stopped;
+> + Recommended articles:
+> + [Android component series --- Android Service component in-depth analysis] (https://www.cnblogs.com/smyhvae/p/4070518.html)
 
-#### 2、Service的两种启动方式？区别在哪？
-> + 参考回答：Service的两种启动模式
->   + **startService()**：通过这种方式调用startService，onCreate()只会被调用一次，多次调用startSercie会多次执行onStartCommand()和onStart()方法。如果外部没有调用stopService()或stopSelf()方法，service会一直运行。
->   + **bindService()**：如果该服务之前**还没创建**，系统回调顺序为onCreate()→onBind()。如果调用bindService()方法前服务**已经被绑定**，多次调用bindService()方法不会多次创建服务及绑定。如果调用者希望与正在绑定的服务**解除绑定**，可以调用unbindService()方法，回调顺序为onUnbind()→onDestroy()；
+#### 2, Service two startup methods? Where is the difference?
+> + Reference Answer: Two startup modes of Service
+> + **startService()**: Calling startService in this way, onCreate() will only be called once, and multiple calls to startSercie will execute the onStartCommand() and onStart() methods multiple times. If the stopService() or stopSelf() method is not called externally, the service will run all the time.
+> + **bindService()**: If the service has not been created before **, the system callback order is onCreate()→onBind(). If the service ** has been bound before calling the bindService() method, calling the bindService() method multiple times will not create the service and binding multiple times. If the caller wants to unbind the service** that is being bound**, you can call the unbindService() method with the callback order onUnbind()→onDestroy();
 ![](https://user-gold-cdn.xitu.io/2019/3/8/1695c1aaec35fdba?w=407&h=520&f=png&s=58930)
-> + 推荐文章：
->   + [Android Service两种启动方式详解](https://www.jianshu.com/p/4c798c91a613)
+> + Recommended articles:
+> + [Android Service two startup methods] (https://www.jianshu.com/p/4c798c91a613)
 
-#### 3、如何保证Service不被杀死 ？
-> + 参考回答：
->   + **onStartCommand方式中，返回START_STICKY或则START_REDELIVER_INTENT**
->     + START_STICKY：如果返回START_STICKY，表示Service运行的进程被Android系统强制杀掉之后，Android系统会将该Service依然设置为started状态（即运行状态），但是不再保存onStartCommand方法传入的intent对象
->     + START_NOT_STICKY：如果返回START_NOT_STICKY，表示当Service运行的进程被Android系统强制杀掉之后，不会重新创建该Service
->     + START_REDELIVER_INTENT：如果返回START_REDELIVER_INTENT，其返回情况与START_STICKY类似，但不同的是系统会保留最后一次传入onStartCommand方法中的Intent再次保留下来并再次传入到重新创建后的Service的onStartCommand方法中
->   + **提高Service的优先级**
-在AndroidManifest.xml文件中对于intent-filter可以通过android:priority = "1000"这个属性设置最高优先级，1000是最高值，如果数字越小则优先级越低，同时适用于广播；
->   + **在onDestroy方法里重启Service**
-当service走到onDestroy()时，发送一个自定义广播，当收到广播时，重新启动service；
->   + **提升Service进程的优先级**
-进程优先级由高到低：前台进程 一 可视进程 一 服务进程 一 后台进程 一 空进程
-可以使用startForeground将service放到前台状态，这样低内存时，被杀死的概率会低一些；
->   + **系统广播监听Service状态**
->   + **将APK安装到/system/app，变身为系统级应用**
-> + **注意**：以上机制都不能百分百保证Service不被杀死，除非做到系统白名单，与系统同生共死
+#### 3. How to ensure that Service is not killed?
+> + Reference answer:
+> + **onStartCommand mode, return START_STICKY or START_REDELIVER_INTENT**
+> + START_STICKY: If START_STICKY is returned, it means that the process running by the Service is forcibly killed by the Android system, the Android system will still set the Service to the started state (that is, the running state), but the intent object passed in by the onStartCommand method will no longer be saved.
+> + START_NOT_STICKY: If START_NOT_STICKY is returned, it means that the service will not be recreated after the process running by the service is forcibly killed by the Android system.
+> + START_REDELIVER_INTENT: If you return START_REDELIVER_INTENT, its return is similar to START_STICKY, but the difference is that the system will keep the last intent passed to the onStartCommand method again and pass it again to the onStartCommand method of the recreated Service.
+> + ** Increase the priority of the Service**
+In the AndroidManifest.xml file for the intent-filter can be set to the highest priority by the android:priority = "1000" attribute, 1000 is the highest value, if the number is smaller, the lower the priority, and applicable to the broadcast;
+> + ** Restart Service in onDestroy method**
+When the service goes to onDestroy(), it sends a custom broadcast, and when it receives the broadcast, restarts the service;
+> + **Improve the priority of the Service process**
+Process priority from high to low: foreground process a visual process a service process a background process an empty process
+You can use startForeground to put the service in the foreground state, so when you have low memory, the probability of being killed is lower;
+> + **System Broadcast Monitor Service Status**
+> + **Install APK to /system/app and turn it into a system-level app**
+> + **Note**: The above mechanisms are not guaranteed to be 100% guaranteed, unless the system is whitelisted and die with the system.
 
-#### 4、能否在Service开启耗时操作 ？ 怎么做 ？
-> + 参考回答：
->   + Service默认并不会运行在子线程中，也不运行在一个独立的进程中，它同样执行在主线程中（UI线程）。换句话说，不要在Service里执行耗时操作，除非手动打开一个子线程，否则有可能出现主线程被阻塞（ANR）的情况；
+#### 4. Can I start time-consuming operations in the Service? How to do it ?
+> + Reference answer:
+> + Service does not run in a child thread by default, nor does it run in a separate process. It is also executed in the main thread (UI thread). In other words, don't perform time-consuming operations in the Service, unless you manually open a child thread, there may be cases where the main thread is blocked (ANR);
 
-#### 5、用过哪些系统Service ？
-> + 参考回答：
+#### 5, which system service has been used?
+> + Reference answer:
 ![](https://user-gold-cdn.xitu.io/2019/3/8/1695c1aaecb6ae48?w=560&h=306&f=png&s=139877)
 
-#### 6、了解ActivityManagerService吗？发挥什么作用
-> + 参考回答：
-ActivityManagerService是Android中最核心的服务 ， 主要负责系统中四大组件的启动、切换、调度及应用进程的管理和调度等工作，其职责与操作系统中的进程管理和调度模块类似；
-> + 推荐文章：
->   + [ActivityManagerService分析——AMS启动流程](https://blog.csdn.net/caohang103215/article/details/79597260)
+#### 6. Understand ActivityManagerService? What role does it play?
+> + Reference answer:
+ActivityManagerService is the core service in Android. It is mainly responsible for the startup, switching, scheduling and application process management and scheduling of the four components in the system. Its responsibilities are similar to the process management and scheduling modules in the operating system.
+> + Recommended articles:
+>   + [ActivityManagerService analysis - AMS startup process](https://blog.csdn.net/caohang103215/article/details/79597260)
 
 ### Broadcast Receiver
 
-#### 1、广播有几种形式 ? 都有什么特点 ？
-> + 参考回答：
->   + 普通广播：开发者自身定义 intent的广播（最常用），所有的广播接收器几乎会在同一时刻接受到此广播信息，**接受的先后顺序随机**；
->   + 有序广播：发送出去的广播被广播接收者**按照先后顺序接收**，同一时刻只会有一个广播接收器能够收到这条广播消息，当这个广播接收器中的逻辑执行完毕后，广播才会继续传递，且优先级（priority）高的广播接收器会先收到广播消息。有序广播可以被接收器截断使得后面的接收器无法收到它；
->   + 本地广播：仅在自己的应用内发送接收广播，也就是只有自己的应用能收到，数据更加安全，效率更高，但只能采用**动态注册**的方式；
->   + 粘性广播：这种广播会**一直滞留**，当有匹配该广播的接收器被注册后，该接收器就会收到此条广播；
-> + 推荐文章：
->   + [Android四大组件：BroadcastReceiver史上最全面解析](https://www.jianshu.com/p/ca3d87a4cdf3)
+#### 1. How many forms does broadcasting have? What are the characteristics?
+> + Reference answer:
+> + Ordinary broadcast: The developer defines the intent broadcast (most commonly used), all broadcast receivers will receive the broadcast information at almost the same time, ** the order of acceptance is random**;
+> + Ordered broadcast: The broadcasts sent out are received by the broadcast receiver** in order. Only one broadcast receiver can receive the broadcast message at the same time, when the logic in the broadcast receiver is executed. After that, the broadcast will continue to be delivered, and the broadcast receiver with a high priority will receive the broadcast message first. An ordered broadcast can be truncated by the receiver so that subsequent receivers cannot receive it;
+> + Local broadcast: Send and receive broadcasts only in your own application, that is, only your own applications can receive them, the data is more secure and more efficient, but only ** dynamic registration** can be used;
+> + Sticky Broadcast: This kind of broadcast will be stuck**, and when a receiver matching the broadcast is registered, the receiver will receive the broadcast;
+> + Recommended articles:
+>   + [Android four components: the most comprehensive analysis in the history of BroadcastReceiver](https://www.jianshu.com/p/ca3d87a4cdf3)
 
-#### 2、广播的两种注册方式 ？
-> + 参考回答：
+#### 2, two registration methods for broadcasting?
+> + Reference answer:
 ![](https://user-gold-cdn.xitu.io/2019/3/8/1695c1aaec0b6b71?w=1025&h=240&f=png&s=54491)
 
-#### 3、广播发送和接收的原理了解吗 ？（Binder机制、AMS）
-> + 参考回答：
+#### 3. What is the principle of broadcast transmission and reception? (Binder mechanism, AMS)
+> + Reference answer:
 ![](https://user-gold-cdn.xitu.io/2019/3/8/1695c1aaeac26f8d?w=576&h=386&f=png&s=12604)
-> + 推荐文章：
->   + [广播的底层实现原理](https://www.jianshu.com/p/02085150339c)
+> + Recommended articles:
+> + [Bottom implementation principle of broadcasting] (https://www.jianshu.com/p/02085150339c)
 
 ### ContentProvider
 
-#### 1、ContentProvider了解多少？
-> + 参考回答：
-ContentProvider作为四大组件之一，其主要负责存储和共享数据。与文件存储、SharedPreferences存储、SQLite数据库存储这几种数据存储方法不同的是，后者保存下的数据只能被该应用程序使用，而前者可以让不同应用程序之间进行数据共享，它还可以选择只对哪一部分数据进行共享，从而保证程序中的隐私数据不会有泄漏风险。
-> + 推荐文章：
->   + [Android：关于ContentProvider的知识都在这里了！](https://blog.csdn.net/carson_ho/article/details/76101093)
+#### 1. How much does ContentProvider know?
+> + Reference answer:
+As one of the four major components, ContentProvider is mainly responsible for storing and sharing data. Different from file storage, SharedPreferences storage, and SQLite database storage, the data saved by the latter can only be used by the application, while the former can allow data sharing between different applications. Choose which part of the data to share only to ensure that there is no risk of leakage of private data in the program.
+> + Recommended articles:
+> + [Android: Knowledge about ContentProvider is here! ](https://blog.csdn.net/carson_ho/article/details/76101093)
 
-#### 2、ContentProvider的权限管理？
-> + 参考回答：
->   + 读写分离
->   + 权限控制-精确到表级
->   + URL控制
+#### 2, ContentProvider permission management?
+> + Reference answer:
+> + read and write separation
+> + privilege control - accurate to the table level
+> + URL Control
 
-#### 3、说说ContentProvider、ContentResolver、ContentObserver 之间的关系？
-> + 参考回答：
->   + **ContentProvider**：管理数据，提供数据的增删改查操作，数据源可以是数据库、文件、XML、网络等，ContentProvider为这些数据的访问提供了统一的接口，可以用来做进程间数据共享。
->   + **ContentResolver**：ContentResolver可以为不同URI操作不同的ContentProvider中的数据，外部进程可以通过ContentResolver与ContentProvider进行交互。
->   + **ContentObserver**：观察ContentProvider中的数据变化，并将变化通知给外界。
+#### 3, talk about the relationship between ContentProvider, ContentResolver, ContentObserver?
+> + Reference answer:
+> + **ContentProvider**: Manage data, provide data addition, deletion, and change operations. The data source can be database, file, XML, network, etc. ContentProvider provides a unified interface for accessing these data, which can be used to process between processes. data sharing.
+> + **ContentResolver**: ContentResolver can manipulate data in different ContentProviders for different URIs, and external processes can interact with ContentProvider through ContentResolver.
+> + **ContentObserver**: Observe the data changes in the ContentProvider and notify the outside world of the changes.
 
-### 数据存储
+### data storage
 
-#### 1、描述一下Android数据持久存储方式？
-> + 参考回答：Android平台实现数据持久存储的常见几种方式：
->     + SharedPreferences存储：一种轻型的数据存储方式，本质是基于XML文件存储的key-value键值对数据，通常用来存储一些简单的配置信息（如应用程序的各种配置信息）；
->     + SQLite数据库存储：一种轻量级嵌入式数据库引擎，它的运算速度非常快，占用资源很少，常用来存储大量复杂的关系数据；
->    + ContentProvider：四大组件之一，用于数据的存储和共享，不仅可以让不同应用程序之间进行数据共享，还可以选择只对哪一部分数据进行共享，可保证程序中的隐私数据不会有泄漏风险；
->    + File文件存储：写入和读取文件的方法和 Java中实现I/O的程序一样；
->    + 网络存储：主要在远程的服务器中存储相关数据，用户操作的相关数据可以同步到服务器上；
+#### 1. Describe the Android data persistence storage method?
+> + Reference Answer: There are several common ways for the Android platform to implement data persistence:
+> + SharedPreferences storage: a lightweight data storage method, essentially based on the key-value key-value pair data stored in the XML file, usually used to store some simple configuration information (such as various configuration information of the application);
+> + SQLite database storage: a lightweight embedded database engine, which is very fast, takes up very little resources, and is often used to store a large amount of complex relational data;
+> + ContentProvider: One of the four major components for data storage and sharing, not only to allow data sharing between different applications, but also to choose which part of the data to share, to ensure that the private data in the program will not Risk of leakage;
+> + File file storage: The method of writing and reading files is the same as the program that implements I/O in Java;
+> + network storage: mainly store related data in the remote server, the relevant data of the user operation can be synchronized to the server;
 
-#### 2、SharedPreferences的应用场景？注意事项？
->  + 参考回答：
->      + SharedPreferences是一种轻型的数据存储方式，本质是基于XML文件存储的key-value键值对数据，通常用来存储一些简单的配置信息，如int，String，boolean、float和long；
->      + 注意事项：
->        + **勿存储大型复杂数据，这会引起内存GC、阻塞主线程使页面卡顿产生ANR**
->        + **勿在多进程模式下，操作Sp**
->        + **不要多次edit和apply，尽量批量修改一次提交**
->        + **建议apply，少用commit**
+#### 2. Application scenarios of SharedPreferences? Precautions?
+> + Reference answer:
+> + SharedPreferences is a lightweight data storage method, essentially based on the key-value key-value pairs stored in the XML file, usually used to store some simple configuration information, such as int, String, boolean, float and long;
+> + Note:
+> + ** Do not store large complex data, which will cause the memory GC, blocking the main thread to make the page jam ANR**
+> + **Do not operate in multi-process mode Sp**
+> + ** Don't edit and apply multiple times, try to modify the commit once in bulk**
+> + ** Suggest apply, use less commit**
 
->  + 推荐文章：
->    + [史上最全面，清晰的SharedPreferences解析](https://blog.csdn.net/geekerhw/article/details/79713068)
->    + [SharedPreferences在多进程中的使用及注意事项](http://zmywly8866.github.io/2015/09/09/sharedpreferences-in-multiprocess.html)
+> + Recommended articles:
+> + [The most comprehensive and clear SharedPreferences analysis in history] (https://blog.csdn.net/geekerhw/article/details/79713068)
+> + [SharedPreferences usage and considerations in multi-process] (http://zmywly8866.github.io/2015/09/09/sharedpreferences-in-multiprocess.html)
 
-#### 3、SharedPrefrences的apply和commit有什么区别？
->  + 参考回答：
->  + apply没有返回值而commit返回boolean表明修改是否提交成功。
->  + apply是将修改数据原子提交到内存, 而后异步真正提交到硬件磁盘, 而commit是同步的提交到硬件磁盘，因此，在多个并发的提交commit的时候，他们会等待正在处理的commit保存到磁盘后在操作，从而降低了效率。而apply只是原子的提交到内容，后面有调用apply的函数的将会直接覆盖前面的内存数据，这样从一定程度上提高了很多效率。
->  + apply方法不会提示任何失败的提示。 由于在一个进程中，sharedPreference是单实例，一般不会出现并发冲突，如果对提交的结果不关心的话，建议使用apply，当然需要确保提交成功且有后续操作的话，还是需要用commit的。
+#### 3. What is the difference between the application and commit of SharedPrefrences?
+> + Reference answer:
+> + apply does not return a value and commit returns boolean to indicate whether the modification was successful.
+> + apply commits the modified data atom to memory, and then asynchronously commits it to the hardware disk, and the commit is synchronously committed to the hardware disk, so when multiple concurrent commit commits, they wait for the commit being processed to be saved. After the disk is in operation, it reduces efficiency. Apply is only the atomic commit to the content, and the function that calls apply will directly overwrite the previous memory data, which improves the efficiency to a certain extent.
+> + apply method will not prompt for any failed prompts. Since sharedPreference is a single instance in a process, there is generally no concurrency conflict. If you don't care about the result of the submission, it is recommended to use apply. Of course, you need to ensure that the submission is successful and there are follow-up actions.
 
-#### 4、了解SQLite中的事务操作吗？是如何做的
->  + 参考回答：
->    + SQLite在做CRDU操作时都默认开启了事务，然后把SQL语句翻译成对应的SQLiteStatement并调用其相应的CRUD方法，此时整个操作还是在rollback journal这个临时文件上进行，只有操作顺利完成才会更新db数据库，否则会被回滚；
+#### 4. Understand the transaction operations in SQLite? How is it done?
+> + Reference answer:
+> + SQLite starts the transaction by default when doing CRDU operation, then translates the SQL statement into the corresponding SQLiteStatement and calls its corresponding CRUD method. At this time, the whole operation is performed on the temporary file of the rollback journal, only the operation is completed successfully. Will update the db database, otherwise it will be rolled back;
 
 #### 5、使用SQLite做批量操作有什么好的方法吗？
 >  + 参考回答：
