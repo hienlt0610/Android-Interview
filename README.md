@@ -250,847 +250,847 @@ As one of the four major components, ContentProvider is mainly responsible for s
 > + Reference answer:
 > + SQLite starts the transaction by default when doing CRDU operation, then translates the SQL statement into the corresponding SQLiteStatement and calls its corresponding CRUD method. At this time, the whole operation is performed on the temporary file of the rollback journal, only the operation is completed successfully. Will update the db database, otherwise it will be rolled back;
 
-#### 5、使用SQLite做批量操作有什么好的方法吗？
->  + 参考回答：
->    + 使用SQLiteDatabase的beginTransaction方法开启一个事务，将批量操作SQL语句转化为SQLiteStatement并进行批量操作，结束后endTransaction()
+#### 5. Is there any good way to do batch operations using SQLite?
+> + Reference answer:
+> + Use SQLiteDatabase's beginTransaction method to open a transaction, convert batch operation SQL statements into SQLiteStatement and perform bulk operations, endTransaction()
 
-#### 6、如何删除SQLite中表的个别字段
->  + 参考回答：
->    + SQLite数据库只允许增加字段而不允许修改和删除表字段，只能创建新表保留原有字段，删除原表
+#### 6. How to delete individual fields of a table in SQLite
+> + Reference answer:
+> + SQLite database only allows to add fields without allowing to modify and delete table fields, only create new tables to retain the original fields, delete the original table
 
-#### 7、使用SQLite时会有哪些优化操作？
->  + 参考回答：
->    + 使用事务做批量操作
->    + 及时关闭Cursor，避免内存泄露
->    + 耗时操作异步化：数据库的操作属于本地IO耗时操作，建议放入异步线程中处理
->    + ContentValues的容量调整：ContentValues内部采用HashMap来存储Key-Value数据，ContentValues初始容量为8，扩容时翻倍。因此建议对ContentValues填入的内容进行估量，设置合理的初始化容量，减少不必要的内部扩容操作
->    + 使用索引加快检索速度：对于查询操作量级较大、业务对查询要求较高的推荐使用索引
+#### 7. What optimizations will be used when using SQLite?
+> + Reference answer:
+> + Use transactions for bulk operations
+> + Close Cursor in time to avoid memory leaks
+> + Time-consuming operation asynchronous: the operation of the database belongs to the local IO time-consuming operation, it is recommended to put it into the asynchronous thread for processing
+> + Capacity adjustment of ContentValues: ContentValues ​​internally uses HashMap to store Key-Value data. The initial capacity of ContentValues ​​is 8, which doubles when expanding. Therefore, it is recommended to estimate the content filled in by ContentValues, set a reasonable initialization capacity, and reduce unnecessary internal expansion operations.
+> + Use index to speed up retrieval: Recommended index for search operations with large magnitude and high query requirements
 
 ### IPC
 
-#### 1、Android中进程和线程的关系？ 区别？
-> + 参考回答：
->   + 线程是CPU调度的**最小单元**，同时线程是一种**有限**的系统资源
->   + 进程一般指一个执行单元，在PC和移动设备上一个程序或则一个应用
->   + 一般来说，一个App程序**至少有一个**进程，一个进程**至少有一个**线程（包含与被包含的关系），
-通俗来讲就是，在App这个工厂里面有一个进程，线程就是里面的生产线，但主线程（主生产线）只有一条，而子线程（副生产线）可以有多个
->   + 进程有自己独立的地址空间，而进程中的线程共享此地址空间，都可以**并发**执行
-> + 推荐文章：
->   + [Android developer官方文档--进程和线程](https://developer.android.com/guide/components/processes-and-threads?hl=zh-cn)
+#### 1. What is the relationship between processes and threads in Android? the difference?
+> + Reference answer:
+> + Thread is the smallest unit** of the CPU schedule, while the thread is a **limited system resource
+> + Process generally refers to an execution unit, a program or an application on a PC and mobile device
+> + In general, an App program** has at least one ** process, a process ** has at least one ** thread (contains the relationship with the included),
+Generally speaking, there is a process in the App factory, the thread is the production line inside, but the main thread (main production line) has only one, and the child thread (sub-production line) can have multiple
+> + The process has its own independent address space, and the threads in the process share this address space, you can ** concurrent ** execute
+> + Recommended articles:
+> + [Android developer official documentation - process and thread] (https://developer.android.com/guide/components/processes-and-threads?hl=en)
 
-#### 2、如何开启多进程 ？ 应用是否可以开启N个进程 ？ 
-> + 参考回答：
->   + 在AndroidMenifest中给四大组件指定属性android:process开启多进程模式
->   + 在内存允许的条件下可以开启N个进程
-> + 推荐讲解：
->   + [如何开启多进程?应用是否可以开启N个进程？](https://github.com/qmsggg/qmsggg_BlogCollect/issues/158)
+#### 2. How to open multiple processes? Can the application open N processes?
+> + Reference answer:
+> + Assign properties to the four components in AndroidMenifest android:process to open multi-process mode
+> + N processes can be started under the memory allowed
+> + Recommended explanation:
+> + [How to open multi-process? Can the application open N processes? ](https://github.com/qmsggg/qmsggg_BlogCollect/issues/158)
 
-#### 3、为何需要IPC？多进程通信可能会出现的问题？
-> + 参考回答：
->   + 所有运行在不同进程的四大组件（Activity、Service、Receiver、ContentProvider）共享数据都会失败，这是由于Android为每个应用分配了独立的虚拟机，不同的虚拟机在内存分配上有不同的地址空间，这会导致在不同的虚拟机中访问同一个类的对象会产生多份副本。比如常用例子（**通过开启多进程获取更大内存空间、两个或则多个应用之间共享数据、微信全家桶**）
->   + 一般来说，使用多进程通信会造成如下几方面的问题
->       + **静态成员和单例模式完全失效**：独立的虚拟机造成
->       + **线程同步机制完全实效**：独立的虚拟机造成
->       + **SharedPreferences的可靠性下降**：这是因为Sp不支持两个进程并发进行读写，有一定几率导致数据丢失
->       + **Application会多次创建**：Android系统在创建新的进程会分配独立的虚拟机，所以这个过程其实就是启动一个应用的过程，自然也会创建新的Application
-> + 推荐文章：
->   + [Android developer官方文档--进程和线程](https://developer.android.com/guide/components/processes-and-threads?hl=zh-cn)
+#### 3. Why do I need IPC? Possible problems with multi-process communication?
+> + Reference answer:
+> + All four components (Activity, Service, Receiver, ContentProvider) running in different processes will fail to share data. This is because Android allocates separate virtual machines for each application. Different virtual machines have different memory allocations. The address space, which causes multiple copies of objects in the same virtual machine to access the same class. For example, common examples (** by opening multiple processes to get more memory space, sharing data between two or more applications, WeChat family bucket**)
+> + In general, using multi-process communication can cause the following problems
+> + ** Static member and singleton mode are completely invalid**: Independent virtual machine caused
+> + ** Thread synchronization mechanism is fully effective**: Independent virtual machine caused
+> + **SharedPreferences reliability decline**: This is because Sp does not support two processes concurrently read and write, there is a chance to cause data loss
+> + **Application will be created multiple times**: Android system will allocate a separate virtual machine when creating a new process, so this process is actually the process of starting an application, naturally also creating a new Application
+> + Recommended articles:
+> + [Android developer official documentation - process and thread] (https://developer.android.com/guide/components/processes-and-threads?hl=en)
 
-#### 4、Android中IPC方式、各种方式优缺点，为什么选择Binder？
-> + 参考回答：
+#### 4, IPC mode in Android, advantages and disadvantages of various methods, why choose Binder?
+> + Reference answer:
 ![](https://user-gold-cdn.xitu.io/2019/3/8/1695c1ab2aabf780?w=1240&h=720&f=jpeg&s=126001)
-与Linux上传统的IPC机制，比如System V，Socket相比，Binder好在哪呢？
->   + **传输效率高、可操作性强**：传输效率主要影响因素是内存拷贝的次数，拷贝次数越少，传输速率越高。从Android进程架构角度分析：对于消息队列、Socket和管道来说，数据先从发送方的缓存区拷贝到内核开辟的缓存区中，再从内核缓存区拷贝到接收方的缓存区，一共两次拷贝，如图：
+Compared with the traditional IPC mechanism on Linux, such as System V, Socket, where is Binder?
+> + ** High transmission efficiency and operability**: The main influencing factor of transmission efficiency is the number of memory copies. The less the number of copies, the higher the transmission rate. From the perspective of Android process architecture: For message queues, Sockets, and pipes, data is first copied from the sender's cache to the kernel-developed cache, and then copied from the kernel cache to the receiver's cache. Copy, as shown:
 ![](https://user-gold-cdn.xitu.io/2019/3/8/1695c427354bbec4?w=500&h=185&f=png&s=54991)
-而对于Binder来说，数据从发送方的缓存区拷贝到内核的缓存区，而接收方的缓存区与内核的缓存区是映射到同一块物理地址的，节省了一次数据拷贝的过程，如图：
+For Binder, the data is copied from the sender's buffer to the kernel's buffer, and the receiver's cache and the kernel's cache are mapped to the same physical address, saving a data copy process, as shown in the figure. :
 ![](https://user-gold-cdn.xitu.io/2019/3/8/1695c428e3c4a95a?w=485&h=234&f=png&s=81083)
-由于共享内存操作复杂，综合来看，Binder的传输效率是最好的。
->   + **实现C/S架构方便**：Linux的众IPC方式除了Socket以外都不是基于C/S架构，而Socket主要用于网络间的通信且传输效率较低。Binder基于C/S架构 ，Server端与Client端相对独立，稳定性较好。
->   + **安全性高**：传统Linux IPC的接收方无法获得对方进程可靠的UID/PID，从而无法鉴别对方身份；而Binder机制为每个进程分配了UID/PID且在Binder通信时会根据UID/PID进行有效性检测。
-> + 推荐文章：
->   + [为什么 Android 要采用 Binder 作为 IPC 机制？](https://www.zhihu.com/question/39440766)
+Due to the complexity of shared memory operations, Binder's transmission efficiency is the best.
+> + ** Convenient implementation of C / S architecture **: Linux's IPC mode is not based on C / S architecture except Socket, and Socket is mainly used for communication between networks and transmission efficiency is low. Binder is based on the C/S architecture. The server and client are relatively independent and have good stability.
+> + **High security**: The receiver of the traditional Linux IPC cannot obtain the reliable UID/PID of the other process, so that the identity of the other party cannot be authenticated. The Binder mechanism assigns the UID/PID to each process and will communicate with the Binder. Validity detection based on UID/PID.
+> + Recommended articles:
+> + [Why does Android use Binder as an IPC mechanism? ](https://www.zhihu.com/question/39440766)
 
-#### 5、Binder机制的作用和原理？
->  + 参考回答：
->    + Linux系统将一个进程分为**用户空间**和**内核空间**。对于进程之间来说，用户空间的数据不可共享，内核空间的数据可共享，为了保证安全性和独立性，一个进程不能直接操作或者访问另一个进程，即Android的进程是相互独立、隔离的，这就需要跨进程之间的数据通信方式
-![传统IPC机制原理](https://user-gold-cdn.xitu.io/2019/3/8/1695c1ab41198d5c?w=1240&h=853&f=jpeg&s=53125)
+#### 5, the role and principle of the Binder mechanism?
+> + Reference answer:
+> + Linux system divides a process into **userspace** and **kernelspace**. For the process, the user space data can not be shared, the kernel space data can be shared, in order to ensure security and independence, a process can not directly operate or access another process, that is, the Android process is independent and isolated. , which requires data communication between processes
+[Traditional IPC mechanism principle] (https://user-gold-cdn.xitu.io/2019/3/8/1695c1ab41198d5c?w=1240&h=853&f=jpeg&s=53125)
 
->    + 一次完整的 Binder IPC 通信过程通常是这样：
->        + 首先 Binder 驱动在内核空间创建一个数据接收缓存区；
->        + 接着在内核空间开辟一块内核缓存区，建立内核缓存区和内核中数据接收缓存区之间的映射关系，以及内核中数据接收缓存区和接收进程用户空间地址的映射关系；
->        + 发送方进程通过系统调用 copyfromuser() 将数据 copy 到内核中的内核缓存区，由于内核缓存区和接收进程的用户空间存在内存映射，因此也就相当于把数据发送到了接收进程的用户空间，这样便完成了一次进程间的通信。
-![Binder机制原理](https://user-gold-cdn.xitu.io/2019/3/8/1695c1ab2efe8dc5?w=1240&h=885&f=jpeg&s=63773)
+> + A complete Binder IPC communication process usually looks like this:
+> + First the Binder driver creates a data receive buffer in the kernel space;
+> + Then open a kernel cache area in the kernel space, establish the mapping relationship between the kernel cache area and the data receive buffer area in the kernel, and the mapping relationship between the data receive buffer area and the receive process user space address in the kernel;
+> + The sender process copies the data to the kernel cache in the kernel through the system call copyfromuser(). Since the user space of the kernel cache and the receiving process has a memory map, it is equivalent to sending data to the user space of the receiving process. This completes an interprocess communication.
+![Binder mechanism principle] (https://user-gold-cdn.xitu.io/2019/3/8/1695c1ab2efe8dc5?w=1240&h=885&f=jpeg&s=63773)
 
-#### 6、Binder框架中ServiceManager的作用？
-> + 参考回答：
->   + **Binder框架** 是基于 C/S 架构的。由一系列的组件组成，包括 Client、Server、ServiceManager、Binder驱动，其中 Client、Server、Service Manager 运行在用户空间，Binder 驱动运行在内核空间
+#### 6. What is the role of ServiceManager in the Binder framework?
+> + Reference answer:
+> + **Binder Framework** is based on the C/S architecture. It consists of a series of components, including Client, Server, ServiceManager, and Binder driver. Client, Server, and Service Manager run in user space, and Binder driver runs in kernel space.
 ![](https://user-gold-cdn.xitu.io/2019/3/8/1695c1ab50cf525f?w=1240&h=640&f=jpeg&s=40718)
->        + **Server&Client**：服务器&客户端。在Binder驱动和Service Manager提供的基础设施上，进行Client-Server之间的通信。
->        + **ServiceManager**（如同DNS域名服务器）服务的管理者，将Binder名字转换为Client中对该Binder的引用，使得Client可以通过Binder名字获得Server中Binder实体的引用。
->        + **Binder驱动**（如同路由器）：负责进程之间binder通信的建立，传递，计数管理以及数据的传递交互等底层支持。
+> + **Server&Client**: Server & Client. Communication between Client-Server is performed on the infrastructure provided by the Binder driver and Service Manager.
+> + **ServiceManager** (like the DNS domain name server) service manager, convert the Binder name to a reference to the Binder in the Client, so that the Client can obtain a reference to the Binder entity in the Server through the Binder name.
+> + **Binder driver** (like router): responsible for the underlying support of the establishment, delivery, counting management and data transfer interaction of the binder communication between processes.
 ![](https://user-gold-cdn.xitu.io/2019/3/8/1695c1ab5abdf775?w=1117&h=1220&f=png&s=308318)
-图片出自Carson_Ho文章 —— Android跨进程通信：图文详解 Binder机制 原理
+Image from Carson_Ho article - Android cross-process communication: Graphical explanation Binder mechanism Principle
 
-#### 7、Bundle传递对象为什么需要序列化？Serialzable和Parcelable的区别？
-> + 参考回答：
->    + 因为bundle传递数据时只支持基本数据类型，所以在传递对象时需要序列化转换成可存储或可传输的本质状态（字节流）。序列化后的对象可以在网络、IPC（比如启动另一个进程的Activity、Service和Reciver）之间进行传输，也可以存储到本地。
->    + 序列化实现的两种方式：实现Serializable/Parcelable接口。不同点如图：
+#### 7. Why does the Bundle pass the object serialization? What is the difference between Serialzable and Parcelable?
+> + Reference answer:
+> + Because bundles only support basic data types when passing data, serialization is required to be converted to a storable or transportable essence state (byte stream) when passing objects. The serialized object can be transferred between the network, IPC (such as the Activity, Service, and Reciver that starts another process), or it can be stored locally.
+> + Two ways to implement serialization: Implement the Serializable/Parcelable interface. The different points are as follows:
 ![](https://user-gold-cdn.xitu.io/2019/3/8/1695c349f019c41f?w=500&h=393&f=png&s=104411)
 
-#### 8、讲讲AIDL？原理是什么？如何优化多模块都使用AIDL的情况？
-> + 参考回答：
->    + AIDL(Android Interface Definition Language，Android接口定义语言)：如果在一个进程中要调用另一个进程中对象的方法，可使用AIDL生成可序列化的参数，AIDL会生成一个服务端对象的代理类，通过它客户端实现间接调用服务端对象的方法。
->    + AIDL的本质是系统提供了一套可快速实现Binder的工具。关键类和方法：
->        + **AIDL接口**：继承IInterface。
->        + **Stub类**：Binder的实现类，服务端通过这个类来提供服务。
->        + **Proxy类**：服务器的本地代理，客户端通过这个类调用服务器的方法。
->        + **asInterface()**：客户端调用，将服务端的返回的Binder对象，转换成客户端所需要的AIDL接口类型对象。如果客户端和服务端位于统一进程，则直接返回Stub对象本身，否则返回系统封装后的Stub.proxy对象
->        + **asBinder()**：根据当前调用情况返回代理Proxy的Binder对象。
->        + **onTransact()**：运行服务端的Binder线程池中，当客户端发起跨进程请求时，远程请求会通过系统底层封装后交由此方法来处理。
->        + **transact()**：运行在客户端，当客户端发起远程请求的同时将当前线程挂起。之后调用服务端的onTransact()直到远程请求返回，当前线程才继续执行。
->    +   当有多个业务模块都需要AIDL来进行IPC，此时需要为每个模块创建特定的aidl文件，那么相应的Service就会很多。必然会出现系统资源耗费严重、应用过度重量级的问题。解决办法是建立Binder连接池，即将每个业务模块的Binder请求统一转发到一个远程Service中去执行，从而避免重复创建Service。
->        + **工作原理**：每个业务模块创建自己的AIDL接口并实现此接口，然后向服务端提供自己的唯一标识和其对应的Binder对象。服务端只需要一个Service，服务器提供一个queryBinder接口，它会根据业务模块的特征来返回相应的Binder对象，不同的业务模块拿到所需的Binder对象后就可进行远程方法的调用了
+#### 8. Tell me about AIDL? What is the principle? How to optimize the use of AIDL in multiple modules?
+> + Reference answer:
+> + AIDL (Android Interface Definition Language): If you want to call a method in another process in a process, you can use AIDL to generate serializable parameters. AIDL will generate a proxy class for the server object. Through its client implementation of the method of indirectly calling the server object.
+> + The essence of AIDL is that the system provides a set of tools to quickly implement Binder. Key categories and methods:
+> + **AIDL interface**: Inherited IInterface.
+> + **Stub class**: Binder's implementation class, the server provides services through this class.
+> + **Proxy class**: The local proxy of the server, the way the client invokes the server through this class.
+> + **asInterface()**: The client calls the Binder object returned by the server to be converted into the AIDL interface type object required by the client. If the client and the server are in a unified process, the Stub object itself is directly returned. Otherwise, the Stub.proxy object encapsulated by the system is returned.
+> + **asBinder()**: Returns the Binder object of the proxy Proxy according to the current call.
+> + **onTransact()**: In the Binder thread pool running the server, when the client initiates a cross-process request, the remote request will be processed by the underlying encapsulation of the system.
+> + **transact()**: Runs on the client, suspending the current thread while the client initiates the remote request. The server's onTransact() is then called until the remote request returns, and the current thread continues execution.
+> + When there are multiple business modules that need AIDL for IPC, you need to create a specific aidl file for each module, then there will be a lot of corresponding services. There will inevitably be a problem of serious system resource consumption and excessive application of heavyweight. The solution is to establish a Binder connection pool, that is, the Binder request of each service module is uniformly forwarded to a remote service to execute, thereby avoiding repeated creation of the Service.
+> + **How ​​it works**: Each business module creates its own AIDL interface and implements this interface, then provides its own unique identifier and its corresponding Binder object to the server. The server only needs a Service. The server provides a queryBinder interface, which returns the corresponding Binder object according to the characteristics of the business module. After the different business modules get the required Binder object, the remote method can be called.
 
 ### View
 
-#### 1、讲下View的绘制流程？
-> + 参考回答：
->   + View的工作流程主要是指measure、layout、draw这三大流程，即测量、布局和绘制，其中measure确定View的**测量宽/高**，layout确定View的**最终宽/高**和**四个顶点的位置**，而draw则将View**绘制到屏幕**上
->   + View的绘制过程遵循如下几步：
->      + **绘制背景** background.draw(canvas) 
->      + **绘制自己**（onDraw）
->      + **绘制 children**（dispatchDraw）
->      + **绘制装饰**（onDrawScollBars）
+#### 1. Tell the drawing process of View?
+> + Reference answer:
+> + View workflow mainly refers to the three processes of measure, layout, and draw, namely measurement, layout and drawing, where measure determines the ** measurement width/height of the view**, and the layout determines the final width/height of the view. ** and ** four vertex positions**, while draw draws View** onto the screen**
+> + The drawing process of View follows the following steps:
+> + **Draw background** background.draw(canvas)
+> + ** draw yourself** (onDraw)
+> + **Drawing children**(dispatchDraw)
+> + **Draw Decoration**(onDrawScollBars)
 ![](https://user-gold-cdn.xitu.io/2019/3/8/1695c1ab5b9705a3?w=670&h=559&f=png&s=298536)
->   + 推荐文章：
->     + [官方文档](https://developer.android.com/reference/android/view/View)
->     + [Android View的绘制流程](https://www.jianshu.com/p/5a71014e7b1b)
->     + [Android应用层View绘制流程与源码分析](https://blog.csdn.net/yanbober/article/details/46128379)
+> + Recommended articles:
+> + [official documentation] (https://developer.android.com/reference/android/view/View)
+> + [Drawing Process of Android View] (https://www.jianshu.com/p/5a71014e7b1b)
+> + [Android application layer View drawing process and source code analysis] (https://blog.csdn.net/yanbober/article/details/46128379)
 
-#### 2、MotionEvent是什么？包含几种事件？什么条件下会产生？
-> + 参考回答：
->   + MotionEvent是手指接触屏幕后所产生的一系列事件。典型的事件类型有如下：
->     + **ACTION_DOWN**：手指刚接触屏幕
->     + **ACTION_MOVE**：手指在屏幕上移动
->     + **ACTION_UP**：手指从屏幕上松开的一瞬间
->     + **ACTION_CANCELL**：手指保持按下操作，并从当前控件转移到外层控件时触发
->   + 正常情况下，一次手指触摸屏幕的行为会触发一系列点击事件，考虑如下几种情况：
->     + 点击屏幕后松开，事件序列：DOWN→UP
->     + 点击屏幕滑动一会再松开，事件序列为DOWN→MOVE→.....→MOVE→UP
+#### 2. What is MotionEvent? Contains several events? Under what conditions will it occur?
+> + Reference answer:
+> + MotionEvent is a series of events that occur after a finger touches the screen. Typical event types are as follows:
+> + **ACTION_DOWN**: Finger just touched the screen
+> + **ACTION_MOVE**: Finger moves on the screen
+> + **ACTION_UP**: The moment the finger is released from the screen
+> + **ACTION_CANCELL**: Triggers when the finger remains pressed and transitions from the current control to the outer control
+> + Under normal circumstances, a finger touching the screen will trigger a series of click events, consider the following:
+> + Click on the screen to release, event sequence: DOWN→UP
+> + Click the screen to slide for a while and then release, the event sequence is DOWN→MOVE→.....→MOVE→UP
 
-#### 3、描述一下View事件传递分发机制？
-> + 参考回答：
->   + View事件分发本质就是对MotionEvent事件分发的过程。即当一个MotionEvent发生后，系统将这个点击事件传递到一个具体的View上
->   + 点击事件的传递顺序：**Activity（Window）→ViewGroup→ View**
->   + 事件分发过程由三个方法共同完成：
->     + **dispatchTouchEvent**：用来进行事件的分发。如果事件能够传递给当前View，那么此方法一定会被调用，返回结果受当前View的onTouchEvent和下级View的dispatchTouchEvent方法的影响，表示是否消耗当前事件
->     + **onInterceptTouchEvent**：在上述方法内部调用，对事件进行拦截。该方法只在ViewGroup中有，View（不包含 ViewGroup）是没有的。一旦拦截，则执行ViewGroup的onTouchEvent，在ViewGroup中处理事件，而不接着分发给View。且只调用一次，返回结果表示是否拦截当前事件
->     + **onTouchEvent**： 在dispatchTouchEvent方法中调用，用来处理点击事件，返回结果表示是否消耗当前事件
+#### 3. Describe the View event delivery distribution mechanism?
+> + Reference answer:
+> + View event distribution is essentially the process of distributing MotionEvent events. That is, when a MotionEvent occurs, the system passes the click event to a specific View.
+> + Click event delivery order: **Activity(Window)→ViewGroup→ View**
+> + The event distribution process is done by three methods:
+> + **dispatchTouchEvent**: Used to distribute events. If the event can be passed to the current View, then this method must be called, the return result is affected by the current View's onTouchEvent and the lower-level View's dispatchTouchEvent method, indicating whether the current event is consumed.
+> + **onInterceptTouchEvent**: Called inside the above method to intercept the event. This method is only available in ViewGroup, and View (without ViewGroup) is not available. Once intercepted, the ViewGroup's onTouchEvent is executed, and the event is processed in the ViewGroup without being distributed to the View. And only once, returning results indicating whether to intercept the current event
+> + **onTouchEvent**: Called in the dispatchTouchEvent method to handle the click event, returning a result indicating whether the current event is consumed
 
-#### 4、如何解决View的事件冲突 ？ 举个开发中遇到的例子 ？
-> + 参考回答：
->    + 常见开发中事件冲突的有ScrollView与RecyclerView的滑动冲突、RecyclerView内嵌同时滑动同一方向
->    + 滑动冲突的处理规则：
->        + 对于由于外部滑动和内部滑动方向不一致导致的滑动冲突，可以根据滑动的方向判断谁来拦截事件。
->        + 对于由于外部滑动方向和内部滑动方向一致导致的滑动冲突，可以根据业务需求，规定何时让外部View拦截事件，何时由内部View拦截事件。
->        + 对于上面两种情况的嵌套，相对复杂，可同样根据需求在业务上找到突破点。
->    + 滑动冲突的实现方法：
->        + **外部拦截法**：指点击事件都先经过父容器的拦截处理，如果父容器需要此事件就拦截，否则就不拦截。具体方法：需要重写父容器的onInterceptTouchEvent方法，在内部做出相应的拦截。
->        + **内部拦截法**：指父容器不拦截任何事件，而将所有的事件都传递给子容器，如果子容器需要此事件就直接消耗，否则就交由父容器进行处理。具体方法：需要配合requestDisallowInterceptTouchEvent方法。
+#### 4, how to solve the event conflict of View? What is the example encountered in development?
+> + Reference answer:
+> + Common conflicts in the development of the slide conflict between the ScrollView and the RecyclerView, the RecyclerView inline slides in the same direction
+> + Processing rules for sliding conflicts:
+> + For sliding conflicts due to inconsistent external sliding and internal sliding directions, you can determine who will intercept the event based on the direction of the sliding.
+> + For sliding conflicts caused by the consistency of the external sliding direction and the internal sliding direction, it is possible to specify when to let the external View intercept the event and when the event is intercepted by the internal View according to the business requirements.
+> + For the nesting of the above two cases, it is relatively complicated, and it can also find a breakthrough point in the business according to the demand.
+> + Implementation of sliding conflicts:
+> + **External Intercept Method**: Refers to the click event is intercepted by the parent container first, if the parent container needs this event to intercept, otherwise it will not intercept. Specific method: you need to override the parent container's onInterceptTouchEvent method to make the corresponding interception internally.
+> + **Internal interception method**: The parent container does not intercept any events, but passes all events to the child container. If the child container needs this event, it will be consumed directly, otherwise it will be processed by the parent container. Specific method: need to cooperate with the requestDisallowInterceptTouchEvent method.
 
 
-#### 5、scrollTo()和scollBy()的区别？
-> + 参考回答：
->   + scollBy内部调用了scrollTo，它是基于当前位置的相对滑动；而scrollTo是绝对滑动，因此如果使用相同输入参数多次调用scrollTo方法，由于View的初始位置是不变的，所以只会出现一次View滚动的效果
->   + 两者都只能对View内容的滑动，而非使View本身滑动。可以使用Scroller有过度滑动的效果
-> + 推荐文章：
->   + [View 的滑动原理和实现方式](https://www.jianshu.com/p/a177869b0382)
+#### 5, the difference between scrollTo() and scollBy()?
+> + Reference answer:
+> + scollBy internally calls scrollTo, which is based on relative sliding of the current position; and scrollTo is absolutely sliding, so if the same method is used to call the scrollTo method multiple times, since the initial position of the View is constant, it will only appear once. View scrolling effect
+> + Both can only slide the View content, not the View itself. Can use the Scroller to have an excessive sliding effect
+> + Recommended articles:
+> + [View sliding principle and implementation] (https://www.jianshu.com/p/a177869b0382)
 
-#### 6、Scroller是怎么实现View的弹性滑动？
-> + 参考回答：
->    + 在MotionEvent.ACTION_UP事件触发时调用startScroll()方法，该方法并没有进行实际的滑动操作，而是记录滑动相关量（滑动距离、滑动时间）
->    + 接着调用invalidate/postInvalidate()方法，请求View重绘，导致View.draw方法被执行
->    + 当View重绘后会在draw方法中调用computeScroll方法，而computeScroll又会去向Scroller获取当前的scrollX和scrollY；然后通过scrollTo方法实现滑动；接着又调用postInvalidate方法来进行第二次重绘，和之前流程一样，如此反复导致View不断进行小幅度的滑动，而多次的小幅度滑动就组成了弹性滑动，直到整个滑动过成结束
+#### 6. How does Scroller realize the elastic sliding of View?
+> + Reference answer:
+> + Call the startScroll() method when the MotionEvent.ACTION_UP event fires. This method does not perform the actual sliding operation, but records the sliding correlation amount (sliding distance, sliding time).
+> + Then call the invalidate/postInvalidate() method to request the View to redraw, causing the View.draw method to be executed.
+> + When View repaints, it will call the computeScroll method in the draw method, and computeScroll will go to the Scroller to get the current scrollX and scrollY; then use the scrollTo method to achieve sliding; then call the postInvalidate method to perform the second redraw, and In the same process as before, this repeatedly causes the View to continuously slide a small amount, and multiple small slidings constitute a flexible sliding until the entire sliding ends.
 ![](https://user-gold-cdn.xitu.io/2019/3/8/1695c37ec2b0e11b?w=1148&h=746&f=jpeg&s=157379)
 
-#### 7、 invalidate()和postInvalidate()的区别 ？
-> + 参考回答：
->   + invalidate()与postInvalidate()都用于刷新View，主要区别是invalidate()在主线程中调用，若在子线程中使用需要配合handler；而postInvalidate()可在子线程中直接调用。
+#### 7, the difference between invalidate() and postInvalidate()?
+> + Reference answer:
+> + invalidate() and postInvalidate() are used to refresh the View. The main difference is that invalidate() is called in the main thread. If it is used in the child thread, it needs to cooperate with the handler; and postInvalidate() can be called directly in the child thread.
 
-#### 8、SurfaceView和View的区别？
-> + 参考回答：
->    + View需要在UI线程对画面进行刷新，而SurfaceView可在子线程进行页面的刷新
->    + View适用于主动更新的情况，而SurfaceView适用于被动更新，如频繁刷新，这是因为如果使用View频繁刷新会阻塞主线程，导致界面卡顿
->    + SurfaceView在底层已实现双缓冲机制，而View没有，因此SurfaceView更适用于需要频繁刷新、刷新时数据处理量很大的页面（如视频播放界面）
+#### 8, the difference between SurfaceView and View?
+> + Reference answer:
+> + View needs to refresh the screen in the UI thread, and SurfaceView can refresh the page in the child thread
+> + View is suitable for active update, and SurfaceView is suitable for passive update, such as frequent refresh. This is because if you use View to refresh frequently, it will block the main thread, resulting in interface jam.
+> + SurfaceView has implemented double buffering at the bottom layer, but View does not, so SurfaceView is more suitable for pages that require a lot of data processing when refreshing and refreshing frequently (such as video playback interface).
 
-#### 9、自定义View如何考虑机型适配 ?
-> + 参考回答：
->    + 合理使用warp_content，match_parent
->    + 尽可能的是使用RelativeLayout
->    + 针对不同的机型，使用不同的布局文件放在对应的目录下，android会自动匹配。
->    + 尽量使用点9图片。
->    + 使用与密度无关的像素单位dp，sp
->    + 引入android的百分比布局。
->    + 切图的时候切大分辨率的图，应用到布局当中。在小分辨率的手机上也会有很好的显示效果。
+#### 9, How to customize the view to consider the model adaptation?
+> + Reference answer:
+> + Reasonable use of warp_content, match_parent
+> + As far as possible, use RelativeLayout
+> + For different models, use different layout files in the corresponding directory, android will automatically match.
+> + Try to use a 9 picture.
+> + Use density-independent pixel units dp,sp
+> + Introduce the android percentage layout.
+> + Cut the large resolution image when cutting the image and apply it to the layout. It also has a good display on small resolution phones.
 
 ### Handler
 
-#### 1、谈谈消息机制Handler作用 ？有哪些要素 ？流程是怎样的 ？
-> + 参考回答：
->   + 负责**跨线程通信**，这是因为**在主线程不能做耗时操作，而子线程不能更新UI**，所以当子线程中进行耗时操作后需要更新UI时，通过Handler将有关UI的操作切换到主线程中执行。
->   + 具体分为四大要素
->     + **Message（消息）**：需要被传递的消息，消息分为硬件产生的消息（如按钮、触摸）和软件生成的消息。
->     + **MessageQueue（消息队列）**：负责消息的存储与管理，负责管理由 Handler发送过来的Message。读取会自动删除消息，单链表维护，插入和删除上有优势。在其next()方法中会无限循环，不断判断是否有消息，有就返回这条消息并移除。
->     + **Handler（消息处理器）**：负责Message的发送及处理。主要向消息池发送各种消息事件（Handler.sendMessage()）和处理相应消息事件（Handler.handleMessage()），按照先进先出执行，内部使用的是单链表的结构。
->     + **Looper（消息池）**：负责关联线程以及消息的分发，在该线程下从 MessageQueue获取 Message，分发给Handler，Looper创建的时候会创建一个 MessageQueue，调用loop()方法的时候消息循环开始，其中会不断调用messageQueue的next()方法，当有消息就处理，否则阻塞在messageQueue的next()方法中。当Looper的quit()被调用的时候会调用messageQueue的quit()，此时next()会返回null，然后loop()方法也就跟着退出。
->   + 具体流程如下
+#### 1. Talk about the role of the message mechanism Handler? What are the elements? What the process is like ?
+> + Reference answer:
+> + Responsible for **cross-thread communication**, because ** can't do time-consuming operations on the main thread, and child threads can't update UI**, so when the user needs to update the UI after time-consuming operations in the child thread, The Handler switches the operation of the UI to the main thread for execution.
+> + is divided into four major elements
+> + **Message: A message that needs to be delivered. The message is divided into hardware-generated messages (such as buttons, touches) and software-generated messages.
+> + **MessageQueue (Message Queue)**: Responsible for the storage and management of messages, responsible for managing the Message sent by the Handler. Reading will automatically delete messages, and there are advantages to singular list maintenance, insertion and deletion. In its next() method, it loops indefinitely, constantly judging whether there is a message, and returning this message and removing it.
+> + **Handler (message processor)**: Responsible for the sending and processing of Message. It mainly sends various message events (Handler.sendMessage()) and handles corresponding message events (Handler.handleMessage()) to the message pool. According to the first-in-first-out execution, the structure of the single-linked list is used internally.
+> + **Looper (message pool)**: Responsible for the associated thread and the distribution of the message. Under this thread, the Message is obtained from the MessageQueue and distributed to the Handler. When the Looper is created, a MessageQueue is created. When the loop() method is called, the message is called. The loop begins, where the next() method of the messageQueue is called continuously, and is processed when there is a message, otherwise it is blocked in the next() method of the messageQueue. When Looper's quit() is called, it will call the quit() of the messageQueue. At this point, next() will return null, and then the loop() method will exit.
+> + The specific process is as follows
 ![](https://user-gold-cdn.xitu.io/2019/3/11/1696ad811957795d?w=737&h=512&f=png&s=27154)
->     + 在主线程创建的时候会创建一个Looper，同时也会在在Looper内部创建一个消息队列。而在创键Handler的时候取出当前线程的Looper，并通过该Looper对象获得消息队列，然后Handler在子线程中通过**MessageQueue.enqueueMessage**在消息队列中添加一条Message。
->     + 通过**Looper.loop()** 开启消息循环不断轮询调用 **MessageQueue.next()**，取得对应的Message并且通过**Handler.dispatchMessage**传递给Handler，最终调用**Handler.handlerMessage**处理消息。
+> + A Looper is created when the main thread is created, and a message queue is also created inside Looper. When the key Handler is created, the current thread's Looper is taken, and the message queue is obtained through the Looper object, and then the Handler adds a Message to the message queue through the **MessageQueue.enqueueMessage** in the child thread.
+> + Open the message loop via **Looper.loop()** to continuously poll the call **MessageQueue.next()**, get the corresponding Message and pass it to the Handler via **Handler.dispatchMessage**, finally call ** Handler.handlerMessage** handles the message.
 
-#### 2、一个线程能否创建多个Handler，Handler跟Looper之间的对应关系 ？
-> + 参考回答：
->   + **一个Thread只能有一个Looper，一个MessageQueen，可以有多个Handler**
->   + **以一个线程为基准，他们的数量级关系是： Thread(1) : Looper(1) : MessageQueue(1) : Handler(N)**
+#### 2. Can a thread create multiple Handlers, the correspondence between Handler and Looper?
+> + Reference answer:
+> + ** A Thread can only have one Looper, one MessageQueen, and can have multiple Handlers**
+> + **Based on one thread, their order of magnitude relationship is: Thread(1) : Looper(1) : MessageQueue(1) : Handler(N)**
 
-#### 3、软引用跟弱引用的区别
-> + 参考回答：
->   + **软引用**：如果一个对象只具有软引用，则内存空间充足时，垃圾回收器就不会回收它；如果内存空间不足了，就会回收这些对象的内存。只要垃圾回收器没有回收它，该对象就可以一直被程序使用。
->   + **弱引用**：如果一个对象只具有弱引用，那么在垃圾回收器线程扫描的过程中，一旦发现了只具有弱引用的对象，不管当前内存空间足够与否，都会回收它的内存。
->   + 两者之间**根本区别**在于：只具有弱引用的对象拥有更短暂的生命周期，可能随时被回收。而只具有软引用的对象只有当内存不够的时候才被回收，在内存足够的时候，通常不被回收。
+#### 3, the difference between soft references and weak references
+> + Reference answer:
+> + **Soft Reference**: If an object only has soft references, the garbage collector will not reclaim it when there is sufficient memory; if there is not enough memory, the memory of those objects will be reclaimed. As long as the garbage collector does not recycle it, the object can always be used by the program.
+> + **weak reference**: If an object only has weak references, then during the garbage collector thread scan, once an object with only weak references is found, regardless of whether the current memory space is sufficient or not, it will be recycled. RAM.
+> + The fundamental difference between the two is that only objects with weak references have a shorter life cycle and may be recycled at any time. Objects with only soft references are only reclaimed when there is not enough memory, and are usually not reclaimed when there is enough memory.
 ![](https://user-gold-cdn.xitu.io/2019/3/11/1696c45ababaed39?w=858&h=378&f=jpeg&s=57940)
-> + 推荐文章：
->   + [Java中的四种引用类型：强引用、软引用、弱引用和虚引用](https://segmentfault.com/a/1190000015282652)
+> + Recommended articles:
+> + [Four reference types in Java: strong references, soft references, weak references, and virtual references] (https://segmentfault.com/a/1190000015282652)
 
-#### 4、Handler 引起的内存泄露原因以及最佳解决方案
-> + 参考回答：
->   + 泄露原因：
->     + Handler 允许我们发送延时消息，如果在延时期间用户关闭了 Activity，那么该 Activity 会泄露。 这个泄露是因为 Message 会持有 Handler，而又因为 Java 的特性，内部类会持有外部类，使得 Activity 会被 Handler 持有，这样最终就导致 Activity 泄露。
->   + 解决方案：
->     + **将 Handler 定义成静态的内部类，在内部持有Activity的弱引用，并在Acitivity的onDestroy()中调用handler.removeCallbacksAndMessages(null)及时移除所有消息。**
+#### 4, the cause of memory leak caused by Handler and the best solution
+> + Reference answer:
+> + Reason for disclosure:
+> + Handler allows us to send a delayed message, and if the user closes the activity during the delay, the activity will leak. This leak is because Message will hold the Handler, and because of the nature of Java, the inner class will hold the outer class, so that the Activity will be held by the Handler, which will eventually lead to the disclosure of the Activity.
+> + Solution:
+> + ** Define the Handler as a static inner class, hold a weak reference to the Activity internally, and call handler.removeCallbacksAndMessages(null) in Acitivity's onDestroy() to remove all messages in time. **
 
-#### 5、为什么系统不建议在子线程访问UI？
-> + 参考回答：
->   + Android的UI控件不是**线程安全**的，如果在多线程中并发访问可能会导致UI控件处于不可预期的状态
->   + 这时你可能会问为何系统不对UI控件的访问加上锁机制呢？因为
->     + 加锁机制会让UI访问逻辑变的复杂
->     + 加锁机制会降低UI的访问效率,因为加锁会阻塞某些线程的执行
+#### 5. Why is the system not recommended to access the UI in a child thread?
+> + Reference answer:
+> + Android UI controls are not ** thread safe**, if concurrent access in multiple threads may cause UI controls to be in an unpredictable state
+> + At this point you may ask why the system does not add a lock mechanism to the UI control access? because
+> + Locking mechanism will make the UI access logic complex
+> + Locking mechanism will reduce UI access efficiency, because locking will block the execution of certain threads
 ![](https://user-gold-cdn.xitu.io/2019/3/13/16975fdd364417e0?w=1208&h=579&f=png&s=24683)
 
-#### 6、Looper死循环为什么不会导致应用卡死？
-> + 参考回答：
->   + 主线程的主要方法就是**消息循环**，一旦退出消息循环，那么你的应用也就退出了，Looer.loop（）方法可能会引起主线程的阻塞，但只要它的消息循环没有被阻塞，能一直处理事件就不会产生ANR异常。
->   + 造成**ANR**的不是主线程阻塞，而是主线程的Looper消息处理过程发生了**任务阻塞**，无法响应手势操作，不能及时刷新UI。
->   + **阻塞与程序无响应**没有必然关系，虽然主线程在没有消息可处理的时候是阻塞的，但是只要保证有消息的时候能够立刻处理，程序是不会无响应的。
+#### 6. Why doesn't the Looper infinite loop cause the application to die?
+> + Reference answer:
+> + The main method of the main thread is ** message loop **, once you exit the message loop, then your application will quit, the Looer.loop () method may cause the main thread to block, but as long as its message loop does not Blocked, the ANR exception will not be generated if the event can be processed all the time.
+> + The **ANR** is not blocked by the main thread, but the main thread's Looper message processing process ** task blocking **, unable to respond to gesture operations, can not refresh the UI in time.
+> + ** Blocking and program non-response ** is not necessarily related, although the main thread is blocked when there is no message to process, but as long as the message can be processed immediately, the program will not be unresponsive.
 
-#### 7、使用Handler的postDealy后消息队列会有什么变化？
-> + 参考回答：
->   + 如果队列中只有这个消息，那么消息不会被发送，而是计算到时唤醒的时间，先将Looper阻塞，到时间就唤醒它。但如果此时要加入新消息，该消息队列的对头跟delay时间相比更长，则插入到头部，按照触发时间进行排序，队头的时间最小、队尾的时间最大
+#### 7. What happens to the message queue after using PostDealy of Handler?
+> + Reference answer:
+> + If there is only this message in the queue, the message will not be sent, but the time to wake up will be calculated. The Looper will be blocked first, and it will be woken up by the time. However, if a new message is to be added at this time, the header of the message queue is longer than the delay time, and then inserted into the head, sorted according to the trigger time, the time of the team leader is the smallest, and the time of the team tail is the largest.
 
-#### 8、可以在子线程直接new一个Handler吗？怎么做？
-> + 参考回答：
->   + 不可以，因为在**主线程**中，Activity内部包含一个Looper对象，它会自动管理Looper，处理子线程中发送过来的消息。而对于**子线程**而言，没有任何对象帮助我们维护Looper对象，所以需要我们自己手动维护。所以要在子线程开启Handler要先创建Looper，并开启Looper循环
+#### 8, can you directly create a new Handler in the child thread? How to do it?
+> + Reference answer:
+> + No, because in the main thread**, the Activity contains a Looper object inside, it will automatically manage the Looper, processing the message sent in the child thread. For the **sub-thread**, there are no objects to help us maintain the Looper object, so we need to manually maintain it. So to open the Handler in the child thread, first create a Looper, and open the Looper loop.
 ![](https://user-gold-cdn.xitu.io/2019/3/14/1697b3a7257d670a?w=1312&h=878&f=png&s=129237)
-> + 推荐文章：
->   + [Android异步消息处理机制完全解析，带你从源码的角度彻底理解](https://blog.csdn.net/guolin_blog/article/details/9991569)
+> + Recommended articles:
+> + [Android asynchronous message processing mechanism is fully parsed, let you thoroughly understand from the source code] (https://blog.csdn.net/guolin_blog/article/details/9991569)
 
-#### 9、Message可以如何创建？哪种效果更好，为什么？
-> + 参考回答：可以通过三种方法创建：
->   + 直接生成实例**Message m = new Message**
->   + 通过**Message m = Message.obtain**
->   + 通过**Message m = mHandler.obtainMessage()**
-> + 后两者效果更好，因为Android默认的消息池中消息数量是10，而后两者是直接在消息池中取出一个Message实例，这样做就可以避免多生成Message实例。
+#### 9, How can Message be created? Which effect is better, why?
+> + Reference Answer: Can be created in three ways:
+> + Generate instances directly**Message m = new Message**
+> + via **Message m = Message.obtain**
+> + via **Message m = mHandler.obtainMessage()**
+> + The latter two are better, because the number of messages in the default message pool of Android is 10, and the latter two are to take a Message instance directly in the message pool, so as to avoid generating multiple Message instances.
 
-### 线程
-#### 1、线程池的好处？ 四种线程池的使用场景，线程池的几个参数的理解？
-> + 参考回答：
->   + 使用线程池的好处是减少在创建和销毁线程上所花的时间以及系统资源的开销，解决资源不足的问题。如果不使用线程池，有可能造成系统创建大量同类线程而导致消耗完内存或则“过度切换”的问题，归纳总结就是
->     + **重用存在的线程，减少对象创建、消亡的开销，性能佳。**
->     + **可有效控制最大并发线程数，提高系统资源的使用率，同时避免过多资源竞争，避免堵塞。**
->     + **提供定时执行、定期执行、单线程、并发数控制等功能。**
->   + Android中的线程池都是直接或间接通过配置ThreadPoolExecutor来实现不同特性的线程池.Android中最常见的类具有不同特性的线程池分别为：
->     + **newCachedThreadPool**：只有非核心线程，最大线程数非常大，所有线程都活动时会为新任务创建新线程,否则会利用空闲线程 ( 60s空闲时间,过了就会被回收,所以线程池中有0个线程的可能 )来处理任务.
->       + 优点：任何任务都会被立即执行(任务队列SynchronousQuue相当于一个空集合);比较适合执行大量的耗时较少的任务.
->     + **newFixedThreadPool**：只有核心线程，并且数量固定的，所有线程都活动时，因为队列没有限制大小，新任务会等待执行，当线程池空闲时不会释放工作线程，还会占用一定的系统资源。
->       + 优点：更快的响应外界请求
->     + **newScheduledThreadPool**：核心线程数固定,非核心线程（闲着没活干会被立即回收数）没有限制.
->       + 优点：执行定时任务以及有固定周期的重复任务
->     + **newSingleThreadExecutor**：只有一个核心线程,确保所有的任务都在同一线程中按序完成
->       + 优点：不需要处理线程同步的问题
->   + 通过源码可以了解到上面的四种线程池实际上还是利用 ThreadPoolExecutor 类实现的
+### Thread
+#### 1. What are the benefits of thread pool? Four thread pool usage scenarios, understanding of several parameters of the thread pool?
+> + Reference answer:
+> The benefit of using a thread pool is to reduce the time spent creating and destroying threads and the overhead of system resources to solve the problem of insufficient resources. If you do not use the thread pool, it may cause the system to create a large number of similar threads, resulting in the consumption of memory or "over-switching" problem, the summary is
+> + ** Reuse existing threads, reduce the overhead of object creation and extinction, and have good performance. **
+> + ** can effectively control the maximum number of concurrent threads, improve the utilization of system resources, while avoiding excessive resource competition and avoiding congestion. **
+> + ** Provides functions such as scheduled execution, periodic execution, single thread, and concurrent number control. **
+> + Thread pool in Android is directly or indirectly through the configuration of ThreadPoolExecutor to achieve different characteristics of the thread pool. The most common classes in Android have different characteristics of the thread pool are:
+> + **newCachedThreadPool**: Only non-core threads, the maximum number of threads is very large, all threads will create new threads for new tasks when they are active, otherwise they will use idle threads (60s idle time, will be recycled after passing, so There are 0 threads in the thread pool possible to handle the task.
+> + Advantages: Any task will be executed immediately (the task queue SynchronousQuue is equivalent to an empty collection); it is more suitable for executing a large number of less time-consuming tasks.
+> + **newFixedThreadPool**: only the core thread, and the number is fixed, all threads are active, because the queue has no limit size, the new task will wait for execution, the thread will not release the worker thread when the thread pool is idle, it will take up certain System resources.
+> + Advantages: Faster response to external requests
+> + **newScheduledThreadPool**: The number of core threads is fixed, non-core threads (the number of cores that are idle and will be reclaimed immediately) is unlimited.
+> + Advantages: Performing scheduled tasks and repetitive tasks with fixed cycles
+> + **newSingleThreadExecutor**: Only one core thread, ensuring that all tasks are completed in order in the same thread
+> + Advantages: no need to deal with thread synchronization issues
+> + You can see from the source code that the above four thread pools are actually implemented using the ThreadPoolExecutor class.
 ![](https://user-gold-cdn.xitu.io/2019/3/14/1697b39705b3f2e3?w=1870&h=1022&f=png&s=294409)
-> + 推荐文章：
->   + [java线程池解析和四种线程池的使用](https://blog.csdn.net/ztchun/article/details/57413255)
+> + Recommended articles:
+> + [java thread pool resolution and use of four thread pools] (https://blog.csdn.net/ztchun/article/details/57413255)
 
-#### 2、Android中还了解哪些方便线程切换的类？
-> + 参考回答：
->   + **AsyncTask**：底层封装了线程池和Handler，便于执行后台任务以及在子线程中进行UI操作。
->   + **HandlerThread**：一种具有消息循环的线程，其内部可使用Handler。
->   + **IntentService**：是一种异步、会自动停止的服务，内部采用HandlerThread。
+#### 2, Android also know which classes are convenient for thread switching?
+> + Reference answer:
+> + **AsyncTask**: The underlying package of thread pool and Handler is convenient for performing background tasks and UI operations in child threads.
+> + **HandlerThread**: A thread with a message loop that can use Handlers internally.
+> + **IntentService**: is an asynchronous, automatic stop service, internally using HandlerThread.
 
-#### 3、讲讲AsyncTask的原理
-> + 参考回答：
->   + **AsyncTask中有两个线程池（SerialExecutor和THREAD_POOL_EXECUTOR）和一个Handler（InternalHandler），其中线程池SerialExecutor用于任务的排队，而线程池THREAD_POOL_EXECUTOR用于真正地执行任务，InternalHandler用于将执行环境从线程池切换到主线程。**
->   + **sHandler是一个静态的Handler对象，为了能够将执行环境切换到主线程，这就要求sHandler这个对象必须在主线程创建。由于静态成员会在加载类的时候进行初始化，因此这就变相要求AsyncTask的类必须在主线程中加载，否则同一个进程中的AsyncTask都将无法正常工作。**
+#### 3, talk about the principle of AsyncTask
+> + Reference answer:
+> + ** There are two thread pools (SerialExecutor and THREAD_POOL_EXECUTOR) and one Handler (InternalHandler) in the AsyncTask, where the thread pool SerialExecutor is used for queuing tasks, while the thread pool THREAD_POOL_EXECUTOR is used to actually perform tasks, and the InternalHandler is used to execute the environment. Switch from the thread pool to the main thread. **
+> + **sHandler is a static Handler object. In order to be able to switch the execution environment to the main thread, this requires the sHandler object to be created in the main thread. Since static members are initialized when the class is loaded, this disguise requires that the AsyncTask class must be loaded in the main thread, otherwise the AsyncTask in the same process will not work properly. **
 
-#### 4、IntentService有什么用 ？
-> + 参考回答：
->   + **IntentService**可用于**执行后台耗时**的任务，当任务执行完成后会**自动停止**，同时由于IntentService是服务的原因，不同于普通Service，IntentService可**自动创建子线程**来执行任务，这导致它的优先级比单纯的线程要高，不容易被系统杀死，所以IntentService比较适合执行一些**高优先级**的后台任务。
+#### 4. What is the use of IntentService?
+> + Reference answer:
+> + **IntentService** can be used to ** execute the time-consuming ** task, when the task is completed, it will automatically stop **, and because the IntentService is the reason of the service, different from the ordinary Service, IntentService can be ** Automatically create a child thread ** to perform the task, which results in its priority is higher than the simple thread, not easy to be killed by the system, so the IntentService is more suitable to perform some ** high priority ** background tasks.
 
-#### 5、直接在Activity中创建一个thread跟在service中创建一个thread之间的区别？
-> + 参考回答：
->   + **在Activity中被创建**：该Thread的就是为这个Activity服务的，完成这个特定的Activity交代的任务，主动通知该Activity一些消息和事件，Activity销毁后，该Thread也没有存活的意义了。
->   + **在Service中被创建**：这是保证最长生命周期的Thread的唯一方式，只要整个Service不退出，Thread就可以一直在后台执行，一般在Service的onCreate()中创建，在onDestroy()中销毁。所以，在Service中创建的Thread，适合长期执行一些独立于APP的后台任务，比较常见的就是：在Service中保持与服务器端的长连接。
+#### 5, the difference between creating a thread directly in the Activity and creating a thread in the service?
+> + Reference answer:
+> + ** is created in the Activity **: The Thread is for this Activity service, complete the task of this specific Activity, actively notify the Activity some messages and events, after the Activity is destroyed, the Thread is not alive Meaning.
+> + ** is created in Service**: This is the only way to guarantee the longest lifecycle of Thread. As long as the entire Service does not exit, Thread can always be executed in the background, usually created in Service's onCreate(). Destroyed in onDestroy(). Therefore, the Thread created in the Service is suitable for long-term execution of some background tasks independent of the APP. The more common one is to maintain a long connection with the server in the Service.
 
-#### 6、ThreadPoolExecutor的工作策略 ？
-> + 参考回答：ThreadPoolExecutor执行任务时会遵循如下规则
->   + 如果线程池中的线程数量**未达到**核心线程的数量，那么会直接启动一个核心线程来执行任务。
->   + 如果线程池中的线程数量**已经达到**或则超过核心线程的数量，那么任务会被插入任务队列中排队等待执行。
->   + 如果在第2点无法将任务插入到任务队列中，这往往是由于任务队列已满，这个时候如果在线程数量**未达到线程池规定的最大值**，那么会立刻启动一个非核心线程来执行任务。
->   + 如果第3点中线程数量**已经达到线程池规定的最大值**，那么就拒绝执行此任务，ThreadPoolExecutor会调用RejectedExecutionHandler的rejectedExecution方法来通知调用者。
+#### 6, ThreadPoolExecutor's work strategy?
+> + Reference Answer: ThreadPoolExecutor will follow the following rules when performing tasks
+> + If the number of threads in the thread pool ** does not reach the number of core threads, then a core thread is started directly to perform the task.
+> + If the number of threads in the thread pool** has reached ** or exceeds the number of core threads, then the task will be queued into the task queue for execution.
+> + If the task cannot be inserted into the task queue at point 2, this is often because the task queue is full. At this time, if the number of threads ** does not reach the maximum value specified by the thread pool**, then a non-start will be started immediately. The core thread to perform the task.
+> + If the number of threads in point 3 has reached the maximum value specified by the thread pool**, then the task is refused, and ThreadPoolExecutor will call the rejectedExecution method of RejectedExecutionHandler to notify the caller.
 
-#### 7、Handler、Thread和HandlerThread的差别？
-> + 参考回答：
->   + **Handler**：在android中负责发送和处理消息，通过它可以实现其他支线线程与主线程之间的消息通讯。
->   + **Thread**：Java进程中执行运算的最小单位，亦即执行处理机调度的基本单位。某一进程中一路单独运行的程序。
->   + **HandlerThread**：一个继承自Thread的类HandlerThread，Android中没有对Java中的Thread进行任何封装，而是提供了一个继承自Thread的类HandlerThread类，这个类对Java的Thread做了很多便利的封装。HandlerThread继承于Thread，所以它本质就是个Thread。与普通Thread的差别就在于，它在内部直接实现了Looper的实现，这是Handler消息机制必不可少的。有了自己的looper，可以让我们在自己的线程中分发和处理消息。如果不用HandlerThread的话，需要手动去调用Looper.prepare()和Looper.loop()这些方法。
+#### 7, the difference between Handler, Thread and HandlerThread?
+> + Reference answer:
+> + **Handler**: In android, it is responsible for sending and processing messages, through which it can realize message communication between other branch threads and the main thread.
+> + **Thread**: The smallest unit in the Java process that performs the operation, which is the basic unit that executes the processor scheduling. A program that runs separately in a process.
+> **HandlerThread**: A class HandlerThread that inherits from Thread. Android does not have any wrapper around Thread in Java. Instead, it provides a class HandlerThread class that inherits from Thread. This class does a lot of Java Thread. Convenient packaging. HandlerThread inherits from Thread, so it is essentially a Thread. The difference with the normal Thread is that it directly implements the Looper implementation internally, which is essential for the Handler message mechanism. With our own looper, we can distribute and process messages in our own threads. If you don't use HandlerThread, you need to manually call Looper.prepare() and Looper.loop().
 
-#### 8、ThreadLocal的原理
-> + 参考回答：
->   + ThreadLocal是一个关于创建线程局部变量的类。使用场景如下所示：
->     + **实现单个线程单例以及单个线程上下文信息存储，比如交易id等。**
->     + **实现线程安全，非线程安全的对象使用ThreadLocal之后就会变得线程安全，因为每个线程都会有一个对应的实例。 承载一些线程相关的数据，避免在方法中来回传递参数。**
->   + 当需要使用多线程时，有个变量恰巧不需要共享，此时就不必使用synchronized这么麻烦的关键字来锁住，每个线程都相当于在堆内存中开辟一个空间，线程中带有对共享变量的缓冲区，通过缓冲区将堆内存中的共享变量进行读取和操作，ThreadLocal相当于线程内的内存，一个局部变量。每次可以对线程自身的数据读取和操作，并不需要通过缓冲区与 主内存中的变量进行交互。并不会像synchronized那样修改主内存的数据，再将主内存的数据复制到线程内的工作内存。ThreadLocal可以让线程独占资源，存储于线程内部，避免线程堵塞造成CPU吞吐下降。
->   + 在每个Thread中包含一个ThreadLocalMap，ThreadLocalMap的key是ThreadLocal的对象，value是独享数据。
+#### 8, the principle of ThreadLocal
+> + Reference answer:
+> + ThreadLocal is a class for creating thread-local variables. The usage scenario is as follows:
+> + ** Implement a single thread singleton and a single thread context information store, such as transaction ids. **
+> + ** Implementing thread-safe, non-thread-safe objects become thread-safe after using ThreadLocal, because each thread will have a corresponding instance. Host some thread-related data to avoid passing parameters back and forth in the method. **
+> + When you need to use multi-threading, there is a variable that does not need to be shared. In this case, you don't have to use the so complicated keyword to lock. Each thread is equivalent to open a space in the heap memory. For the buffer of the shared variable, the shared variable in the heap memory is read and operated through the buffer, and ThreadLocal is equivalent to the memory in the thread and a local variable. Each time the data of the thread itself can be read and manipulated, there is no need to interact with variables in main memory through the buffer. It does not modify the main memory data as synchronized, and then copies the main memory data to the working memory in the thread. ThreadLocal allows threads to monopolize resources and store them inside threads, avoiding CPU congestion and causing CPU throughput to drop.
+> + Include a ThreadLocalMap in each Thread, the key of ThreadLocalMap is the object of ThreadLocal, and value is exclusive data.
 
-#### 9、多线程是否一定会高效（优缺点）
-> + 参考回答：
->   + 多线程的优点：
->     + **方便高效的内存共享 - 多进程下内存共享比较不便，且会抵消掉多进程编程的好处**
->     + **较轻的上下文切换开销 - 不用切换地址空间，不用更改CR3寄存器，不用清空TLB**
->     + **线程上的任务执行完后自动销毁**
->   + 多线程的缺点：
->     + **开启线程需要占用一定的内存空间(默认情况下,每一个线程都占512KB)**
->     + **如果开启大量的线程,会占用大量的内存空间,降低程序的性能**
->     + **线程越多,cpu在调用线程上的开销就越大**
->     + **程序设计更加复杂,比如线程间的通信、多线程的数据共享**
->   + 综上得出，多线程**不一定**能提高效率，在内存空间紧张的情况下反而是一种负担，因此在日常开发中，应尽量
->     + **不要频繁创建，销毁线程，使用线程池**
->     + **减少线程间同步和通信（最为关键）**
->     + **避免需要频繁共享写的数据**
->     + **合理安排共享数据结构，避免伪共享（false sharing）**
->     + **使用非阻塞数据结构/算法**
->     + **避免可能产生可伸缩性问题的系统调用（比如mmap）**
->     + **避免产生大量缺页异常，尽量使用Huge Page**
->     + **可以的话使用用户态轻量级线程代替内核线程**
+#### 9, whether multi-threading will be efficient (pros and cons)
+> + Reference answer:
+> + The advantages of multi-threading:
+> + ** Convenient and efficient memory sharing - Memory sharing in multiple processes is inconvenient and will offset the benefits of multi-process programming**
+> + ** Lighter context switching overhead - no need to switch address space, no need to change CR3 registers, no need to empty TLB**
+> + **The task on the thread is automatically destroyed after execution **
+> + The disadvantages of multithreading:
+> + **Opening a thread requires a certain amount of memory space (by default, each thread occupies 512KB)**
+> + **If you open a lot of threads, it will take up a lot of memory space and reduce the performance of the program**
+> + ** The more threads, the more overhead the cpu has on the calling thread**
+> + **Programming is more complicated, such as communication between threads, multi-threaded data sharing**
+> + In summary, multi-threading** does not necessarily improve efficiency, but in the case of tight memory space, it is a burden, so in daily development, try to
+> + ** Don't create, destroy threads, use thread pools**
+> + ** Reduce inter-thread synchronization and communication (most critical)**
+> + ** Avoid the need to share frequently written data**
+> + ** Reasonably arrange shared data structure to avoid false sharing**
+> + **Using non-blocking data structures/algorithms**
+> + ** Avoid system calls (such as mmap) that may cause scalability issues**
+> + ** Avoid generating a lot of page faults and try to use Huge Page**
+> + **Use user-mode lightweight threads instead of kernel threads if possible**
 
-#### 10、多线程中,让你做一个单例,你会怎么做
-> + 参考回答：
->   + 多线程中建立单例模式考虑的因素有很多，比如线程安全 -延迟加载-代码安全:如防止序列化攻击，防止反射攻击(防止反射进行私有方法调用) -性能因素
->   + 实现方法有多种，饿汉，懒汉(线程安全，线程非安全)，双重检查(DCL),内部类，以及枚举
+#### 10, multi-threading, let you make a single case, what do you do
+> + Reference answer:
+> + There are many factors to consider when setting up a singleton pattern in multithreading, such as thread safety - lazy loading - code security: such as preventing serialization attacks, preventing reflection attacks (preventing reflection from private method calls) - performance factors
+> + There are a variety of implementation methods, hungry, lazy (thread safe, thread non-secure), double check (DCL), inner class, and enumeration
 ![](https://user-gold-cdn.xitu.io/2019/3/15/16980b520b353f34?w=1160&h=842&f=png&s=123575)
->   + 推荐文章：
->     + [单例模式的总结](https://xxxblank.github.io/2017/09/14/singleTon/)
+> + Recommended articles:
+> + [Summary of Singleton Mode] (https://xxxblank.github.io/2017/09/14/singleTon/)
 
-#### 11、除了notify还有什么方式可以唤醒线程
-> + 参考回答：
->   + 当一个拥有Object锁的线程调用 wait()方法时，就会使当前线程加入object.wait 等待队列中，并且释放当前占用的Object锁，这样其他线程就有机会获取这个Object锁，获得Object锁的线程调用notify()方法，就能在Object.wait 等待队列中随机唤醒一个线程（该唤醒是随机的与加入的顺序无关，优先级高的被唤醒概率会高）
->   + 如果调用notifyAll（）方法就唤醒全部的线程。**注意:调用notify()方法后并不会立即释放object锁，会等待该线程执行完毕后释放Object锁。**
+#### 11, in addition to notify, what else can wake up the thread
+> + Reference answer:
+> + When a thread with an Object lock calls the wait() method, it will cause the current thread to join the object.wait wait queue, and release the currently occupied Object lock, so that other threads have the opportunity to acquire the Object lock and get the Object. The lock thread calls the notify() method to randomly wake up a thread in the Object.wait wait queue (the wakeup is random regardless of the order of join, and the high priority wakeup probability is high)
+> + Wake up all threads if the notifyAll() method is called. **Note: After calling the notify() method, the object lock will not be released immediately, and the Object lock will be released after the thread finishes executing. **
 
-#### 12、什么是ANR ? 什么情况会出现ANR ？如何避免 ？ 在不看代码的情况下如何快速定位出现ANR问题所在 ？
-> + 参考回答：
->   + ANR（Application Not Responding，应用无响应）：当操作在一段时间内系统无法处理时，会在系统层面会弹出ANR对话框
->   + 产生ANR可能是因为5s内无响应用户输入事件、10s内未结束BroadcastReceiver、20s内未结束Service
->   + 想要避免ANR就不要在主线程做耗时操作，而是通过开子线程，方法比如继承Thread或实现Runnable接口、使用AsyncTask、IntentService、HandlerThread等
->   + 推荐文章：
->     + [如何快速分析定位ANR](https://www.jianshu.com/p/cfa9ed42e379)
+#### 12, What is ANR? What happens with ANR? How to avoid it? How to quickly locate the ANR problem without looking at the code?
+> + Reference answer:
+> + ANR (Application Not Responding): When the operation cannot be processed by the system for a period of time, the ANR dialog box will pop up at the system level.
+> + ANR may be generated because there is no response to user input events within 5s, BroadcastReceiver is not terminated within 10s, and Service is not terminated within 20s
+> + Want to avoid ANR, do not do time-consuming operations in the main thread, but by opening sub-threads, such as inheriting Thread or implementing Runnable interface, using AsyncTask, IntentService, HandlerThread, etc.
+> + Recommended articles:
+> + [How to quickly analyze and locate ANR] (https://www.jianshu.com/p/cfa9ed42e379)
 
 ### Bitmap
-#### 1、Bitmap使用需要注意哪些问题 ？
-> + 参考回答：
->   + **要选择合适的图片规格（bitmap类型）**：通常我们优化Bitmap时，当需要做性能优化或者防止OOM，我们通常会使用RGB_565，因为ALPHA_8只有透明度，显示一般图片没有意义，Bitmap.Config.ARGB_4444显示图片不清楚，Bitmap.Config.ARGB_8888占用内存最多。：
->     + ALPHA_8   每个像素占用1byte内存        
->     + ARGB_4444 每个像素占用2byte内存       
->     + ARGB_8888 每个像素占用4byte内存（默认）      
->     + RGB_565 每个像素占用2byte内存
->   + **降低采样率**：BitmapFactory.Options 参数inSampleSize的使用，先把options.inJustDecodeBounds设为true，只是去读取图片的大小，在拿到图片的大小之后和要显示的大小做比较通过calculateInSampleSize()函数计算inSampleSize的具体值，得到值之后。options.inJustDecodeBounds设为false读图片资源。
->   + **复用内存**：即通过软引用(内存不够的时候才会回收掉)，复用内存块，不需要再重新给这个bitmap申请一块新的内存，避免了一次内存的分配和回收，从而改善了运行效率。
->   + **使用recycle()方法及时回收内存**。
->   + **压缩图片**。
+#### 1. What problems should I pay attention to when using Bitmap?
+> + Reference answer:
+> + **To choose the right image specification (bitmap type)**: Usually when we optimize Bitmap, when we need to do performance optimization or prevent OOM, we usually use RGB_565, because ALPHA_8 only has transparency, it shows no meaning in general picture, Bitmap .Config.ARGB_4444 shows that the picture is unclear, Bitmap.Config.ARGB_8888 takes up the most memory. :
+> + ALPHA_8 1 byte of memory per pixel
+> + ARGB_4444 2 bytes of memory per pixel
+> + ARGB_8888 4 bytes of memory per pixel (default)
+> + RGB_565 2 bytes of memory per pixel
+> + **Reduced sampling rate**: Use of BitmapFactory.Options parameter inSampleSize, first set options.inJustDecodeBounds to true, just to read the size of the image, after comparing the size of the image and the size to be displayed The calculateInSampleSize() function calculates the specific value of inSampleSize and gets the value. options.inJustDecodeBounds is set to false to read image resources.
+> + **Reuse memory**: It is through soft reference (recycling when memory is not enough), multiplex memory block, no need to re-apply a new memory for this bitmap, avoiding a memory allocation and Recycling improves operational efficiency.
+> + ** Recycle memory in time using the recycle() method**.
+> + **Compressed images**.
 
-#### 2、Bitmap.recycle()会立即回收么？什么时候会回收？如果没有地方使用这个Bitmap，为什么垃圾回收不会直接回收？
-> + 参考回答：
->   + 通过源码可以了解到，加载Bitmap到内存里以后，是包含**两部分内存区域**的。简单的说，一部分是**Java部分**的，一部分是**C部分**的。这个Bitmap对象是由Java部分分配的，不用的时候系统就会自动回收了
->   + 但是那个对应的**C可用**的内存区域，虚拟机是不能直接回收的，这个只能调用底层的功能释放。所以需要调用recycle()方法来释放C部分的内存
->   + bitmap.recycle()方法用于回收该Bitmap所占用的内存，接着将bitmap置空，最后使用System.gc()调用一下系统的垃圾回收器进行回收，调用System.gc()并不能保证立即开始进行回收过程，而只是为了加快回收的到来。
+#### 2, Bitmap.recycle() will be recycled immediately? When will it be recycled? If there is no place to use this Bitmap, why is garbage collection not directly recycled?
+> + Reference answer:
+> + It can be learned from the source code that after loading the Bitmap into memory, it contains the two parts of the memory area**. To put it simply, part of it is the **Java part**, and part of it is the **C part**. This Bitmap object is allocated by the Java part. When not in use, the system will automatically recycle it.
+> + But the corresponding **C can be used in the memory area, the virtual machine can not be directly recycled, this can only call the underlying function release. So you need to call the recycle() method to release the memory of the C part.
+> + bitmap.recycle () method is used to recover the memory occupied by the Bitmap, then the bitmap is empty, and finally use System.gc () to call the system garbage collector for recycling, call System.gc () is not guaranteed Start the recycling process immediately, just to speed up the recovery.
 
-#### 3、一张Bitmap所占内存以及内存占用的计算
-> + 参考回答：
->   + Bitamp 所占内存大小 = 宽度像素 x （inTargetDensity / inDensity） x 高度像素 x （inTargetDensity / inDensity）x 一个像素所占的内存字节大小
->     + 注：这里inDensity表示目标图片的dpi（放在哪个资源文件夹下），inTargetDensity表示目标屏幕的dpi，所以你可以发现inDensity和inTargetDensity会对Bitmap的宽高进行拉伸，进而改变Bitmap占用内存的大小。
->   + 在Bitmap里有两个获取内存占用大小的方法。
->     + **getByteCount()**：API12 加入，代表存储 Bitmap 的像素需要的最少内存。 
->     + **getAllocationByteCount()**：API19 加入，代表在内存中为 Bitmap 分配的内存大小，代替了 getByteCount() 方法。
->     + 在**不复用 Bitmap** 时，getByteCount() 和 getAllocationByteCount 返回的结果是一样的。在通过**复用 Bitmap** 来解码图片时，那么 getByteCount() 表示新解码图片占用内存的大 小，getAllocationByteCount() 表示被复用 Bitmap 真实占用的内存大小
+#### 3, a calculation of the memory and memory usage of a Bitmap
+> + Reference answer:
+> + Bitamp memory size = width pixel x (inTargetDensity / inDensity) x height pixel x (inTargetDensity / inDensity)x memory byte size occupied by one pixel
+> + Note: Here inDensity represents the dpi of the target image (under which resource folder), inTargetDensity represents the dpi of the target screen, so you can find that inDensity and inTargetDensity will stretch the width and height of the Bitmap, thus changing the memory occupied by Bitmap. the size of.
+> + There are two ways to get the memory footprint in the Bitmap.
+> + **getByteCount()**: API12 join, which represents the minimum amount of memory required to store the pixels of the Bitmap.
+> + **getAllocationByteCount()**: API19 join, which represents the amount of memory allocated for Bitmap in memory, instead of the getByteCount() method.
+> + When ** does not reuse Bitmap**, getByteCount() and getAllocationByteCount return the same result. When decoding a picture by multiplexing Bitmap**, then getByteCount() indicates the size of the memory occupied by the newly decoded picture, and getAllocationByteCount() indicates the size of the memory occupied by the multiplexed Bitmap.
 
-#### 4、Android中缓存更新策略 ？
-> + 参考回答：
->   + Android的缓存更新策略**没有统一的标准**，一般来说，缓存策略主要包含**缓存的添加、获取和删除**这三类操作，但不管是内存缓存还是存储设备缓存，它们的缓存容量是有限制的，因此删除一些旧缓存并添加新缓存，如何定义缓存的新旧这就是一种策略，**不同的策略就对应着不同的缓存算法**
->   + 比如可以简单地根据文件的最后修改时间来定义缓存的新旧，当缓存满时就将最后修改时间较早的缓存移除，这就是一种缓存算法，但不算很完美
+#### 4, cache update strategy in Android?
+> + Reference answer:
+> + Android's cache update policy** There is no uniform standard**. Generally speaking, the cache policy mainly includes three types of operations: add, get, and delete caches, but whether it is memory cache or storage device cache. Their cache capacity is limited, so delete some old caches and add new caches. How to define cached old and new is a strategy, ** different strategies correspond to different cache algorithms**
+> + For example, you can simply define the old and new cache according to the last modification time of the file. When the cache is full, the cache with the last modification time is removed. This is a caching algorithm, but it is not perfect.
 
-#### 5、LRU的原理 ？
-> + 参考回答：
->   + 为减少流量消耗，可采用缓存策略。常用的缓存算法是LRU(Least Recently Used)：当缓存满时, 会优先淘汰那些近期最少使用的缓存对象。主要是两种方式：
->   + **LruCache(内存缓存)**：LruCache类是一个线程安全的泛型类：内部采用一个LinkedHashMap以强引用的方式存储外界的缓存对象，并提供get和put方法来完成缓存的获取和添加操作，当缓存满时会移除较早使用的缓存对象，再添加新的缓存对象。
->   + **DiskLruCache(磁盘缓存)**： 通过将缓存对象写入文件系统从而实现缓存效果
+#### 5, the principle of LRU?
+> + Reference answer:
+> + To reduce traffic consumption, a caching strategy can be used. The commonly used caching algorithm is LRU (Least Recently Used): when the cache is full, the cached objects that have been used the least recently are prioritized. There are two main ways:
+> + **LruCache (memory cache)**: The LruCache class is a thread-safe generic class: internally uses a LinkedHashMap to store external cache objects in a strongly referenced manner, and provides get and put methods to complete cache acquisition and The add operation removes the cached object that was used earlier when the cache is full, and then adds a new cached object.
+> + **DiskLruCache**: Cache effect by writing cached objects to the file system
 
-### 性能优化
-#### 1、图片的三级缓存中,图片加载到内存中,如果内存快爆了,会发生什么？怎么处理？
-> + 参考回答：
->   + 首先我们要清楚图片的三级缓存是如何的
+### Performance Optimization
+#### 1. In the three-level cache of the picture, the picture is loaded into the memory. What happens if the memory bursts quickly? How to deal with it?
+> + Reference answer:
+> + First we need to know how the image's level 3 cache is
 ![](https://user-gold-cdn.xitu.io/2019/3/19/169956a4db82e9f3?w=1319&h=529&f=png&s=9441)
-如果内存足够时不回收。内存不够时就回收软引用对象
+Do not recycle if there is enough memory. Reclaim soft reference objects when there is not enough memory
 
-#### 2、内存中如果加载一张500*500的png高清图片.应该是占用多少的内存?
-> + 参考回答：
->   + **不考虑屏幕比的话**：占用内存=500 * 500 * 4 = 1000000B ≈ 0.95MB
->   + **考虑屏幕比的的话**：占用内存= 宽度像素 x （inTargetDensity / inDensity） x 高度像素 x （inTargetDensity / inDensity）x 一个像素所占的内存字节大小
->   + inDensity表示目标图片的dpi（放在哪个资源文件夹下），inTargetDensity表示目标屏幕的dpi
+#### 2. If you load a 500*500 png HD image in memory, how much memory should you use?
+> + Reference answer:
+> + **Do not consider the screen ratio**: Memory usage = 500 * 500 * 4 = 1000000B ≈ 0.95MB
+> + **Consider screen ratio**: Occupied memory = Width pixel x (inTargetDensity / inDensity) x Height pixel x (inTargetDensity / inDensity)x Memory byte size occupied by one pixel
+> + inDensity indicates the dpi of the target image (under which resource folder), inTargetDensity indicates the dpi of the target screen
 ![](https://user-gold-cdn.xitu.io/2019/3/19/169957db5956a922?w=239&h=277&f=png&s=11171)
 
-#### 3、WebView的性能优化 ?
-> + 参考回答：
->   + 一个加载网页的过程中，native、网络、后端处理、CPU都会参与，各自都有必要的工作和依赖关系；让他们相互并行处理而不是相互阻塞才可以让网页加载更快：
->     + **WebView初始化慢，可以在初始化同时先请求数据，让后端和网络不要闲着。**
->     + **常用 JS 本地化及延迟加载，使用第三方浏览内核**
->     + **后端处理慢，可以让服务器分trunk输出，在后端计算的同时前端也加载网络静态资源。**
->     + **脚本执行慢，就让脚本在最后运行，不阻塞页面解析。**
->     + **同时，合理的预加载、预缓存可以让加载速度的瓶颈更小。**
->     + **WebView初始化慢，就随时初始化好一个WebView待用。**
->     + **DNS和链接慢，想办法复用客户端使用的域名和链接。**
-![WebView启动时间](https://user-gold-cdn.xitu.io/2019/3/20/16998e3a43726040?w=1534&h=504&f=png&s=28905)
-> + 推荐文章：
->   + [WebView性能、体验分析与优化](https://tech.meituan.com/2017/06/09/webviewperf.html)
+#### 3, WebView performance optimization?
+> + Reference answer:
+> + In the process of loading web pages, native, network, back-end processing, CPU will participate, each has the necessary work and dependencies; let them process in parallel rather than block each other to make the page load faster:
+> + **WebView initialization is slow, you can request data at the same time of initialization, so that the backend and network do not idle. **
+> + **Common JS localization and lazy loading, using a third-party browsing kernel**
+> + ** The backend processing is slow, allowing the server to split the trunk output. At the same time as the backend computing, the front end also loads the network static resources. **
+> + ** The script executes slowly, letting the script run at the end without blocking page parsing. **
+> + ** At the same time, reasonable preloading and pre-caching can make the bottleneck of loading speed smaller. **
+> + **WebView initialization is slow, you can initialize a WebView to be used at any time. **
+> + **DNS and links are slow, find ways to reuse the domain names and links used by the client. **
+![WebView startup time](https://user-gold-cdn.xitu.io/2019/3/20/16998e3a43726040?w=1534&h=504&f=png&s=28905)
+> + Recommended articles:
+> + [WebView Performance, Experience Analysis and Optimization] (https://tech.meituan.com/2017/06/09/webviewperf.html)
 
-#### 4、Bitmap如何处理大图，如一张30M的大图，如何预防OOM？
-> + 参考回答：避免OOM的问题就需要对大图片的加载进行管理，主要通过缩放来减小图片的内存占用。
->   + BitmapFactory提供的加载图片的四类方法（**decodeFile、decodeResource、decodeStream、decodeByteArray**）都支持BitmapFactory.Options参数，通过inSampleSize参数就可以很方便地对一个图片进行采样缩放
->   + 比如一张1024*1024的高清图片来说。那么它占有的内存为1024*1024*4，即4MB，如果inSampleSize为2，那么采样后的图片占用内存只有512*512*4,即1MB（**注意：根据最新的官方文档指出，inSampleSize的取值应该总是为2的指数，即1、2、4、8等等，如果外界输入不足为2的指数，系统也会默认选择最接近2的指数代替，比如2**）
->   + 综合考虑。通过采样率即可有效加载图片，流程如下
->       + **将BitmapFactory.Options的inJustDecodeBounds参数设为true并加载图片**
->       + **从BitmapFactory.Options中取出图片的原始宽高信息，它们对应outWidth和outHeight参数**
->       + **根据采样率的规则并结合目标View的所需大小计算出采样率inSampleSize**
->       + **将BitmapFactory.Options的inJustDecodeBounds参数设为false，重新加载图片**
+#### 4、How does Bitmap handle large images, such as a large 30M image, how to prevent OOM?
+> + Reference Answer: To avoid OOM problems, you need to manage the loading of large images, mainly by scaling to reduce the memory footprint of the image.
+> + The four types of methods (**decodeFile, decodeResource, decodeStream, decodeByteArray**) that load images provided by BitmapFactory support the BitmapFactory.Options parameter. It is convenient to sample and scale an image by using the inSampleSize parameter.
+> + For example, a 1024*1024 HD picture. Then it occupies 1024*1024*4, which is 4MB. If inSampleSize is 2, then the sampled image takes up only 512*512*4, which is 1MB (**Note: According to the latest official documentation, inSampleSize The value should always be an index of 2, ie 1, 2, 4, 8, etc. If the external input is less than 2, the system will choose the index closest to 2 by default, such as 2**)
+> + Comprehensive consideration. The image can be loaded efficiently by sampling rate. The flow is as follows
+> + ** Set the inJustDecodeBounds parameter of BitmapFactory.Options to true and load the image**
+> + **Retrieve the original width and height information of the image from BitmapFactory.Options, which correspond to the outWidth and outHeight parameters**
+> + ** Calculate the sampling rate inSampleSize** according to the sampling rate rule and the required size of the target View
+> + ** Set the inJustDecodeBounds parameter of BitmapFactory.Options to false and reload the image**
 ![](https://user-gold-cdn.xitu.io/2019/3/20/1699929ec27be435?w=2048&h=1706&f=png&s=412340)
-> + 推荐文章：
->   + [Android高效加载大图、多图解决方案，有效避免程序OOM](https://blog.csdn.net/guolin_blog/article/details/9316683)
+> + Recommended articles:
+> + [Android efficiently load large image, multi-image solution, effectively avoid program OOM] (https://blog.csdn.net/guolin_blog/article/details/9316683)
 
-#### 5、内存回收机制与GC算法(各种算法的优缺点以及应用场景)；GC原理时机以及GC对象
-> + 参考回答：
->   + 内存判定对象可回收有两种机制：
->     + **引用计数算法**：给对象中添加一个引用计数器，每当有一个地方引用它时，计数器值就加1；当引用失效时，计数器值就减1；任何时刻计数器为0的对象就是不可能再被使用的。然而在主流的Java虚拟机里未选用引用计数算法来管理内存，主要原因是它难以解决对象之间**相互循环引用**的问题，所以出现了另一种对象存活判定算法。
->     + **可达性分析法**：通过一系列被称为『GCRoots』的对象作为起始点，从这些节点开始向下搜索，搜索所走过的路径称为***引用链**，当一个对象到GC Roots没有任何引用链相连时，则证明此对象是不可用的。其中可作为GC Roots的对象：虚拟机栈中引用的对象，主要是指栈帧中的**本地变量**、本地方法栈中**Native**方法引用的对象、方法区中**类静态**属性引用的对象、方法区中**常量**引用的对象
->   + GC回收算法有以下四种：
->     + **分代收集算法**：是当前商业虚拟机都采用的一种算法，根据对象存活周期的不同，将Java堆划分为新生代和老年代，并根据各个年代的特点采用最适当的收集算法。
->     + 新生代：大批对象死去，只有少量存活。使用『复制算法』，只需复制少量存活对象即可。
->       + **复制算法**：把可用内存按容量划分为大小相等的两块，每次只使用其中的一块。当这一块的内存用尽后，把还存活着的对象『复制』到另外一块上面，再将这一块内存空间一次清理掉。**实现简单，运行高效。在对象存活率较高时就要进行较多的复制操作，效率将会变低**
->     + 老年代：对象存活率高。使用『标记—清理算法』或者『标记—整理算法』，只需标记较少的回收对象即可。
->       + **标记-清除算法**：首先『标记』出所有需要回收的对象，然后统一『清除』所有被标记的对象。**标记和清除两个过程的效率都不高，清除之后会产生大量不连续的内存碎片，空间碎片太多可能会导致以后在程序运行过程中需要分配较大对象时，无法找到足够的连续内存而不得不提前触发另一次垃圾收集动作。**
->       + **标记-整理算法**：首先『标记』出所有需要回收的对象，然后进行『整理』，使得存活的对象都向一端移动，最后直接清理掉端边界以外的内存。**标记整理算法会将所有的存活对象移动到一端，并对不存活对象进行处理，因此其不会产生内存碎片**
->   + 推荐文章：[图解Java 垃圾回收机制](https://blog.csdn.net/justloveyou_/article/details/71216049) 
+#### 5, memory recovery mechanism and GC algorithm (the advantages and disadvantages of various algorithms and application scenarios); GC principle timing and GC objects
+> + Reference answer:
+> + There are two mechanisms for memory decision objects to be reclaimable:
+> + **Reference Counting Algorithm**: Add a reference counter to the object. Whenever there is a place to reference it, the counter value is incremented by one; when the reference fails, the counter value is decremented by one; the counter is zero at any time. The object is no longer usable. However, in the mainstream Java virtual machine, the reference counting algorithm is not used to manage memory. The main reason is that it is difficult to solve the problem of mutual circular reference between objects, so another object survival judgment algorithm has emerged.
+> + **reachability analysis**: Through a series of objects called "GCRoots" as the starting point, search down from these nodes, the searched path is called *** reference chain ** When an object is connected to the GC Roots without any reference chain, it proves that the object is not available. It can be used as an object of GC Roots: the object referenced in the virtual machine stack, mainly refers to the **local variable in the stack frame, the object referenced by the **Native** method in the local method stack, and the ** class in the method area. Static ** attribute referenced object, method area ** constant ** referenced object
+> + GC recovery algorithms are as follows:
+> + **Generation Collection Algorithm**: It is an algorithm used by current commercial virtual machines. According to the different life cycle of the object, the Java heap is divided into new generation and old age, and the most appropriate according to the characteristics of each age. Collection algorithm.
+> + New generation: A large number of objects die, only a small number survive. With the "copy algorithm", you only need to copy a small number of surviving objects.
+> + **Copy Algorithm**: Divide the available memory into two equal-sized blocks, using only one of them at a time. When this piece of memory is used up, "copy" the still surviving object to another piece, and then clean up this piece of memory space once. ** Easy to implement and efficient to run. When the object survival rate is high, more copying operations are required, and the efficiency will be lower.
+> + Old age: The object has a high survival rate. Use "Mark-Clean Algorithm" or "Mark-Finish Algorithm" to mark fewer recycle objects.
+> + **Marker-Clear Algorithm**: First mark all objects that need to be reclaimed, and then "clear" all marked objects. **The process of marking and clearing is not efficient. After cleaning, it will generate a large amount of non-contiguous memory fragmentation. Too much space fragmentation may result in insufficient continuity when a large object needs to be allocated in the future. Memory has to trigger another garbage collection action in advance. **
+> + **Marking-Organizing Algorithm**: First, "mark" all the objects that need to be recycled, and then "finish" the objects so that the surviving objects move to one end, and finally clear the memory outside the end boundaries. The **markup algorithm moves all surviving objects to one end and processes non-surviving objects so they don't produce memory fragmentation**
+> + Recommended article: [Illustration Java garbage collection mechanism] (https://blog.csdn.net/justloveyou_/article/details/71216049)
 
-#### 6、内存泄露和内存溢出的区别 ？AS有什么工具可以检测内存泄露
-> + 参考回答：
->   + **内存溢出(out of memory)**：是指程序在申请内存时，没有足够的内存空间供其使用，出现out of memory；比如申请了一个integer，但给它存了long才能存下的数，那就是内存溢出。
->   + **内存泄露(memory leak)**：是指程序在申请内存后，无法释放已申请的内存空间，一次内存泄露危害可以忽略，但内存泄露堆积后果很严重，无论多少内存,迟早会被占光。**memory leak会最终会导致out of memory！**
->   + 查找内存泄漏可以使用Android Studio 自带的**AndroidProfiler**工具或**MAT**
+#### 6, the difference between memory leaks and memory overflow? What tools does AS have to detect memory leaks?
+> + Reference answer:
+> + **Out of memory**: means that when the program is applying for memory, there is not enough memory space for it to use, out of memory; for example, an integer is applied, but it is stored in long to save it. The next number is the memory overflow.
+> + **memory leak**: refers to the program can not release the requested memory space after applying for memory, a memory leak hazard can be ignored, but the memory leak accumulation is very serious, no matter how much memory, sooner or later Being occupied by light. **memory leak will eventually lead to out of memory! **
+> + Find memory leaks can use the **AndroidProfiler** tool or **MAT** that comes with Android Studio
 
-#### 7、性能优化,怎么保证应用启动不卡顿? 黑白屏怎么处理?
-> + 参考回答：
->   + **应用启动速度**，取决于你在application里面时候做了什么事情，比如你集成了很多sdk，并且sdk的init操作都需要在主线程里实现所以会有卡顿的感觉。在非必要的情况下可以把加载延后或则开启子线程处理
->   + 另外，影响**界面卡顿**的两大因素，分别是**界面绘制和数据处理。**
->     + 布局优化(使用include，merge标签，复杂布局推荐使用ConstraintLayout等)
->     + onCreate() 中不执行耗时操作 把页面显示的 View 细分一下，放在 AsyncTask 里逐步显示，用 Handler 更好。这样用户的看到的就是有层次有步骤的一个个的 View 的展示，不会是先看到一个黑屏，然后一下显示所有 View。最好做成动画，效果更自然。
->     + 利用多线程的目的就是尽可能的减少 onCreate() 和 onReume() 的时间，使得用户能尽快看到页面，操作页面。
->     + 减少主线程阻塞时间。
->     + 提高 Adapter 和 AdapterView 的效率。
->   + 推荐文章：[Android 性能优化之内存检测、卡顿优化、耗电优化、APK瘦身](https://blog.csdn.net/csdn_aiyang/article/details/74989318) 
->   + **黑白屏产生原因**：当我们在启动一个应用时，系统会去检查是否已经存在这样一个进程，如果不存在，系统的服务会先检查startActivity中的intent的信息，然后在去创建进程，最后启动Acitivy，即冷启动。而启动出现白黑屏的问题，就是在这段时间内产生的。系统在绘制页面加载布局之前，首先会初始化窗口（Window），而在进行这一步操作时，系统会根据我们设置的Theme来指定它的Theme 主题颜色，我们在Style中的设置就决定了显示的是白屏还是黑屏。
->     + windowIsTranslucent和windowNoTitle，将这两个属性都设置成true (会有明显的卡顿体验，不推荐)
->     + 如果启动页只是是一张图片，那么为启动页专一设置一个新的主题，设置主题的android:windowBackground属性为启动页背景图即可
->     + 使用layer-list制作一张图片launcher_layer.xml，将其设置为启动页专一主题的背景，并将其设置为启动页布局的背景。
-> + 推荐文章：
->   + [Android启动页解决攻略](https://blog.csdn.net/zivensonice/article/details/51691136)
+#### 7, performance optimization, how to ensure that the application does not start up? How to deal with black and white screen?
+> + Reference answer:
+> + **Application startup speed**, depending on what you did when you were in the application, for example, you integrated a lot of sdk, and the sdk init operation needs to be implemented in the main thread so there will be a feeling of stuttering. Delay the load or open the child thread if it is not necessary
+> + In addition, the two major factors affecting the interface ** are ** interface drawing and data processing. **
+> + Layout optimization (using include, merge tags, complex layouts recommended using ConstraintLayout, etc.)
+> + OnCreate() does not perform time-consuming operations. Subdivide the View displayed on the page and display it in the AsyncTask step by step. It is better to use Handler. In this way, the user sees the display of the Views with layers and steps. It is not the first to see a black screen, then display all the views at once. It's best to make an animation and the effect is more natural.
+> + The goal of using multithreading is to reduce the time of onCreate() and onReume() as much as possible so that users can see the page and manipulate the page as soon as possible.
+> + Reduce the main thread blocking time.
+> + Improve the efficiency of the Adapter and AdapterView.
+> + Recommended article: [Android performance optimization memory detection, Catton optimization, power optimization, APK slimming] (https://blog.csdn.net/csdn_aiyang/article/details/74989318)
+> + ** Black and white screen causes **: When we start an application, the system will check if there is such a process, if it does not exist, the system service will first check the information of the intent in the startActivity, and then go Create a process, and finally start Acitivy, which is a cold start. The problem of starting a white screen is the one that occurred during this time. Before the system loads the layout, the system first initializes the window. In this step, the system will specify its theme theme color according to the theme we set. The setting in Style determines the display. Is it a white screen or a black screen?
+> + windowIsTranslucent and windowNoTitle, set both properties to true (there will be a significant Caton experience, not recommended)
+> + If the startup page is just a picture, set a new theme for the startup page, set the theme's android:windowBackground property to the startup page background image.
+> + Use the layer-list to make a picture launcher_layer.xml, set it to the background of the launch page-specific theme, and set it to the background of the launch page layout.
+> + Recommended articles:
+> + [Android startup page solution Raiders] (https://blog.csdn.net/zivensonice/article/details/51691136)
 
-#### 8、强引用置为null，会不会被回收？
-> + 参考回答：
->   + **不会立即释放对象占用的内存。** 如果对象的引用被置为null，只是断开了当前线程栈帧中对该对象的引用关系，而 垃圾收集器是运行在后台的线程，只有当用户线程运行到安全点(safe point)或者安全区域才会扫描对象引用关系，扫描到对象没有被引用则会标记对象，这时候仍然不会立即释放该对象内存，因为有些对象是可恢复的（在 finalize方法中恢复引用 ）。只有确定了对象无法恢复引用的时候才会清除对象内存。
+#### 8. Strong reference is set to null, will it be recycled?
+> + Reference answer:
+> + ** will not immediately release the memory occupied by the object. ** If the object's reference is set to null, it simply breaks the reference relationship to the object in the current thread stack frame, and the garbage collector is the thread running in the background, only when the user thread runs to a safe point Or the security zone will scan the object reference relationship. If the object is not referenced, the object will be marked. At this time, the object memory will not be released immediately, because some objects are recoverable (recovering the reference in the finalize method). The object memory is cleared only when it is determined that the object cannot recover the reference.
 
-#### 9、ListView跟RecyclerView的区别
-> + 参考回答：
->   + 动画区别：
->     + 在**RecyclerView**中，内置有许多动画API，例如：notifyItemChanged(), notifyDataInserted(), notifyItemMoved()等等；如果需要自定义动画效果，可以通过实现（RecyclerView.ItemAnimator类）完成自定义动画效果，然后调用RecyclerView.setItemAnimator()；
->     + 但是**ListView**并没有实现动画效果，但我们可以在Adapter自己实现item的动画效果；
->   + 刷新区别：
->     + ListView中通常刷新数据是用全局刷新notifyDataSetChanged()，这样一来就会非常消耗资源；**本身无法实现局部刷新**，但是如果要在ListView实现**局部刷新**，依然是可以实现的，当一个item数据刷新时，我们可以在Adapter中，实现一个onItemChanged()方法，在方法里面获取到这个item的position（可以通过getFirstVisiblePosition()），然后调用getView()方法来刷新这个item的数据；
->     + RecyclerView中可以实现局部刷新，例如：notifyItemChanged()；
->   + 缓存区别：
->     + RecyclerView比ListView多两级缓存，支持多个离ItemView缓存，支持开发者自定义缓存处理逻辑，支持所有RecyclerView共用同一个RecyclerViewPool(缓存池)。
->     + ListView和RecyclerView缓存机制基本一致，但缓存使用不同
-> + 推荐文章：
->   + [【腾讯Bugly干货分享】Android ListView 与 RecyclerView 对比浅析—缓存机制](https://zhuanlan.zhihu.com/p/23339185)
->   + [ListView 与 RecyclerView 简单对比](https://blog.csdn.net/shu_lance/article/details/79566189)
->   + [Android开发：ListView、AdapterView、RecyclerView全面解析](https://www.jianshu.com/p/4e8e4fd13cf7)
+#### 9, the difference between ListView and RecyclerView
+> + Reference answer:
+> + Animation difference:
+> + In **RecyclerView**, there are many animation APIs built in, such as: notifyItemChanged(), notifyDataInserted(), notifyItemMoved(), etc. If you need to customize the animation effect, you can do it by implementing (RecyclerView.ItemAnimator class) Define the animation effect, then call RecyclerView.setItemAnimator();
+> + But **ListView** does not implement animation effects, but we can implement the animation of the item in the Adapter itself;
+> + Refresh the difference:
+> + ListView usually refreshes the data with global refresh notifyDataSetChanged (), which will consume resources very much; ** can not achieve partial refresh **, but if you want to achieve partial refresh in the ListView **, still can Realized, when an item data is refreshed, we can implement an onItemChanged() method in the Adapter, get the position of the item in the method (you can use getFirstVisiblePosition()), and then call the getView() method to refresh the item. The data;
+> + RecyclerView can achieve partial refresh, for example: notifyItemChanged();
+> + Cache difference:
+> + RecyclerView has two levels of cache than ListView, supports multiple items from the ItemView cache, supports developers to customize the cache processing logic, and supports all RecyclerView sharing the same RecyclerViewPool (cache pool).
+> + ListView and RecyclerView caching mechanisms are basically the same, but the cache is used differently
+> + Recommended articles:
+> + [[Tencent Bugly dry goods sharing] Android ListView and RecyclerView comparison analysis - caching mechanism] (https://zhuanlan.zhihu.com/p/23339185)
+> + [Comparative comparison of ListView and RecyclerView] (https://blog.csdn.net/shu_lance/article/details/79566189)
+> + [Android development: ListView, AdapterView, RecyclerView comprehensive analysis] (https://www.jianshu.com/p/4e8e4fd13cf7)
 
-#### 10、ListView的adapter是什么adapter
-> + 参考回答：
+#### 10, what is the adapter of the ListView adapter?
+> + Reference answer:
 ![](https://user-gold-cdn.xitu.io/2019/3/20/1699a79b39f0c556?w=658&h=546&f=png&s=31636)
->   + **BaseAdapter**：抽象类，实际开发中我们会继承这个类并且重写相关方法，用得最多的一个适配器！
->   + **ArrayAdapter**：支持泛型操作，最简单的一个适配器，只能展现一行文字〜
->   + **SimpleAdapter**：同样具有良好扩展性的一个适配器，可以自定义多种效果！
->   + **SimpleCursorAdapter**：用于显示简单文本类型的listView，一般在数据库那里会用到，不过有点过时，不推荐使用！
+> + **BaseAdapter**: Abstract class, in actual development we will inherit this class and rewrite related methods, the most used adapter!
+> + **ArrayAdapter**: Supports generic operations, the simplest one, can only display one line of text ~
+> + **SimpleAdapter**: An adapter that also has good scalability, you can customize a variety of effects!
+> + **SimpleCursorAdapter**: listView for displaying simple text types, generally used in the database, but a bit outdated, not recommended!
 
-#### 11、LinearLayout、FrameLayout、RelativeLayout性能对比，为什么？
-> + 参考回答：
->   + RelativeLayout会让子View调用2次onMeasure，LinearLayout 在有weight时，也会调用子 View 2次onMeasure
->   + RelativeLayout的子View如果高度和RelativeLayout不同，则会引发效率问题，当子View很复杂时，这个问题会更加严重。如果可以，尽量使用padding代替margin。
->   + 在不影响层级深度的情况下,使用LinearLayout和FrameLayout而不是RelativeLayout。
+#### 11, LinearLayout, FrameLayout, RelativeLayout performance comparison, why?
+> + Reference answer:
+> + RelativeLayout will make the child View call 2 times onMeasure, LinearLayout will also call the child View 2 times onMeasure when there is weight
+> + RelativeLayout's child View will cause efficiency problems if the height is different from the RelativeLayout. This problem will be more serious when the child view is complex. If possible, try to use padding instead of margin.
+> + Use LinearLayout and FrameLayout instead of RelativeLayout without affecting the depth of the hierarchy.
 
 ### JNI
 
-#### 1、对JNI是否了解
-> + 参考回答：
->   + Java的优点是**跨平台**，但也因为其跨平台的的特性导致其**本地交互的能力不够强大**，一些和操作系统相关的的特性Java无法完成，于是**Java提供JNI专门用于和本地代码交互，通过JNI，用户可以调用C、C++编写的本地代码**
->   + NDK是Android所提供的一个工具集合，通过NDK可以在Android中更加方便地通过JNI访问本地代码，其优点在于
->     + 提高代码的安全性。由于so库反编译困难，因此NDK提高了Android程序的安全性
->     + 可以很方便地使用目前已有的C/C++开源库
->     + 便于平台的移植。通过C/C++实现的动态库可以很方便地在其它平台上使用
->     + 提高程序在某些特定情形下的执行效率，但是并不能明显提升Android程序的性能
+#### 1. Do you know about JNI?
+> + Reference answer:
+> + The advantage of Java is ** cross-platform**, but because of its cross-platform features, its ability to interact locally is not strong enough**, some operating system-related features of Java can not be completed, so ** Java provides JNI specifically for interacting with native code. With JNI, users can call native code written in C and C++**
+> + NDK is a collection of tools provided by Android. It is easier to access native code through JNI in Android through NDK.
+> + Improve the security of your code. NDK improves the security of Android programs due to difficulty in decompilation of so libraries
+> + It is very convenient to use the existing C/C++ open source library
+> + Easy to port the platform. Dynamic libraries implemented in C/C++ can be easily used on other platforms
+> + Improve the efficiency of the program in certain situations, but it does not significantly improve the performance of Android programs
 
-#### 2、如何加载NDK库 ？如何在JNI中注册Native函数，有几种注册方法 ？
-> + 参考回答：
+#### 2. How to load the NDK library? How to register Native functions in JNI, how many registration methods?
+> + Reference answer:
 ```
-    public class JniTest{
-        //加载NDK库 
-        static{
-            System.loadLirary("jni-test");
-        }
-    }
+     Public class JniTest{
+         / / Load the NDK library
+         Static{
+             System.loadLirary("jni-test");
+         }
+     }
 
 ```
->   + 注册JNI函数的两种方法
->     + **静态方法**
->     + **动态注册**
->   + 推荐文章：
->     + [注册JNI函数的两种方式](https://blog.csdn.net/wwj_748/article/details/52347341)
->     + [Android JNI 篇 - 从入门到放弃](https://www.jianshu.com/p/3dab1be3b9a4)
+> + Two ways to register JNI functions
+> + **Static method**
+> + **Dynamic Registration**
+> + Recommended articles:
+> + [Two ways to register JNI functions] (https://blog.csdn.net/wwj_748/article/details/52347341)
+> + [Android JNI articles - Getting Started to Abandon] (https://www.jianshu.com/p/3dab1be3b9a4)
 
-#### 3、你用JNI来实现过什么功能 ？ 怎么实现的 ？（加密处理、影音方面、图形图像处理)
->  + 参考回答：
->  + 推荐文章：
->    + [Android JNI 篇 - ffmpeg 获取音视频缩略图](https://www.jianshu.com/p/411761bd5f5b)
+#### 3. What features have you implemented with JNI? How to achieve it? (encryption processing, audio and video, graphics and image processing)
+> + Reference answer:
+> + Recommended articles:
+> + [Android JNI articles - ffmpeg Get audio and video thumbnails] (https://www.jianshu.com/p/411761bd5f5b)
 
-### 设计模式
-#### 1、你所知道的设计模式有哪些？
-> + 参考回答：
->    + **创建型模式，共五种**：工厂方法模式、抽象工厂模式、单例模式、建造者模式、原型模式。
->    + **结构型模式，共七种**：适配器模式、装饰器模式、代理模式、外观模式、桥接模式、组合模式、享元模式。
->    + **行为型模式，共十一种**：策略模式、模板方法模式、观察者模式、迭代子模式、责任链模式、命令模式、备忘录 
-模式、状态模式、访问者模式、中介者模式、解释器模式。
+### Design Patterns
+#### 1. What design patterns do you know?
+> + Reference answer:
+> + **Created mode, a total of five types: factory method mode, abstract factory mode, singleton mode, builder mode, prototype mode.
+> + **Structure mode, a total of seven types**: adapter mode, decorator mode, proxy mode, appearance mode, bridge mode, combination mode, flyweight mode.
+> + ** Behavioral mode, a total of eleven **: strategy mode, template method mode, observer mode, iteration sub mode, responsibility chain mode, command mode, memo
+Mode, state mode, visitor mode, mediator mode, interpreter mode.
 
-#### 2、谈谈MVC、MVP和MVVM，好在哪里，不好在哪里 ？
-> + 参考回答：
->   + **MVC**:
->     + 视图层(View) 对应于xml布局文件和java代码动态view部分
->     + 控制层(Controller) MVC中Android的控制层是由Activity来承担的，Activity本来主要是作为初始化页面，展示数据的操作，但是因为XML视图功能太弱，所以Activity既要负责视图的显示又要加入控制逻辑，承担的功能过多。
->     + 模型层(Model) 针对业务模型，建立数据结构和相关的类，它主要负责网络请求，数据库处理，I/O的操作。
->   + 总结
->     + 具有一定的分层，model彻底解耦，controller和view并没有解耦层与层之间的交互尽量使用回调或者去使用消息机制去完成，尽量避免直接持有 controller和view在android中无法做到彻底分离，但在代码逻辑层面一定要分清业务逻辑被放置在model层，能够更好的复用和修改增加业务。
->   + **MVP**
->     + 通过引入接口BaseView，让相应的视图组件如Activity，Fragment去实现BaseView，实现了视图层的独立，通过中间层Preseter实现了Model和View的完全解耦。MVP**彻底解决**了MVC中View和Controller傻傻分不清楚的问题，但是随着业务逻辑的增加，一个页面可能会非常复杂，UI的改变是非常多，会有非常多的case，这样就会造成View的接口会很庞大。
->   + **MVVM**
->     + MVP中我们说过随着业务逻辑的增加，UI的改变多的情况下，会有非常多的跟UI相关的case，这样就会造成View的接口会很庞大。而MVVM就解决了这个问题，通过双向绑定的机制，实现数据和UI内容，只要想改其中一方，另一方都能够及时更新的一种设计理念，这样就省去了很多在View层中写很多case的情况，只需要改变数据就行。
->   + 三者如何选择？
->     + 如果项目简单，没什么复杂性，未来改动也不大的话，那就不要用设计模式或者架构方法，只需要将每个模块封装好，方便调用即可，不要为了使用设计模式或架构方法而使用。
->     + 对于偏向展示型的app，绝大多数业务逻辑都在后端，app主要功能就是展示数据，交互等，建议使用mvvm。
->     + 对于工具类或者需要写很多业务逻辑app，使用mvp或者mvvm都可。
-> + 推荐文章：
->   + [MVC、MVP、MVVM，我到底该怎么选？](https://juejin.im/post/5b3a3a44f265da630e27a7e6)
+#### 2. Talk about MVC, MVP and MVVM. Where is the good place?
+> + Reference answer:
+> + **MVC**:
+> + View layer (View) corresponds to the xml layout file and the dynamic view of the java code
+> + Control layer (Controller) The control layer of Android in MVC is undertaken by Activity. Activity is mainly used as the initialization page to display data operations, but because the XML view function is too weak, the Activity is responsible for the display of the view. To join the control logic, there are too many functions.
+> + Model Layer For the business model, the data structure and related classes are established. It is mainly responsible for network requests, database processing, and I/O operations.
+> + Summary
+> + has a certain layering, the model is completely decoupled, the controller and the view do not decouple the layer and the interaction between the layers. Try to use the callback or use the message mechanism to complete, try to avoid directly holding the controller and view in the android can not Be completely separated, but at the logic level of the code, it must be clearly stated that the business logic is placed in the model layer, which can better reuse and modify the added business.
+> + **MVP**
+> + By introducing the interface BaseView, the corresponding view components such as Activity, Fragment to achieve BaseView, achieve the independence of the view layer, through the middle layer Preseter to achieve the complete decoupling of Model and View. MVP** completely solves the problem that the View and Controller in MVC are unclear, but with the increase of business logic, a page may be very complicated, the UI changes are very many, there will be a lot of cases, This will cause the View interface to be very large.
+> + **MVVM**
+> + MVP We said that with the increase of business logic and the UI changes, there will be a lot of UI related cases, which will cause the View interface to be very large. MVVM solves this problem. Through the two-way binding mechanism, the data and UI content are realized. If you want to change one of the parties, the other party can update the design concept in time, thus saving a lot of writing in the View layer. In many cases, you only need to change the data.
+> + How do you choose?
+> + If the project is simple, there is no complexity, and the future changes are not big, then do not use design patterns or architectural methods, just need to package each module, easy to call, not to use design patterns or architectural methods. use.
+> + For biased display apps, most of the business logic is on the back end. The main function of the app is to display data, interaction, etc. It is recommended to use mvvm.
+> + For tool classes or to write a lot of business logic app, use mvp or mvvm.
+> + Recommended articles:
+> + [MVC, MVP, MVVM, how should I choose? ](https://juejin.im/post/5b3a3a44f265da630e27a7e6)
 
-#### 3、封装p层之后.如果p层数据过大,如何解决?
-> + 参考回答：
->   + 对于MVP模式来说，P层如果数据逻辑过于臃肿，建议引入**RxJava**或则**Dagger**，越是复杂的逻辑，越能体现RxJava的优越性
-> + 推荐文章：
->   + [（仿有道精品课）RxJava+OkHttp+Retrofit+Dagger2+MVP框架(kotlin版本)](https://juejin.im/post/5c6e601cf265da2dc675b69e#comment)
+#### 3, after the p layer is encapsulated. If the p layer data is too large, how to solve it?
+> + Reference answer:
+> + For the MVP mode, if the data layer logic is too bloated, it is recommended to introduce **RxJava** or **Dagger**. The more complex the logic, the better the superiority of RxJava.
+> + Recommended articles:
+> + [(Improved class) RxJava+OkHttp+Retrofit+Dagger2+MVP framework (kotlin version)](https://juejin.im/post/5c6e601cf265da2dc675b69e#comment)
 
-#### 4、是否能从Android中举几个例子说说用到了什么设计模式 ？
-> + 参考回答：
->   + **AlertDialog、Notification源码中使用了Builder（建造者）模式完成参数的初始化**
->   + **Okhttp内部使用了责任链模式来完成每个Interceptor拦截器的调用**
->   + **RxJava的观察者模式；单例模式；GridView的适配器模式；Intent的原型模式**
->   + **日常开发的BaseActivity抽象工厂模式**
+#### 4, Can you give a few examples from Android to talk about what design pattern is used?
+> + Reference answer:
+> + **AlertDialog, Notification source code used Builder (builder) mode to complete parameter initialization**
+> + **Okhttp internally uses the Chain of Responsibility mode to complete the call of each Interceptor interceptor**
+> + **RxJava observer mode; singleton mode; GridView adapter mode; Intent prototype mode**
+> + **Basic development of BaseActivity abstract factory pattern**
 
 
-#### 5、装饰模式和代理模式有哪些区别 ？
-> + 参考回答：
->   + 装饰器模式与代理模式的区别就在于
->     + 两者都是对类的方法进行**扩展**，但**装饰器模式**强调的是增强自身,在被装饰之后你能够在被增强的类上使用增强后的功能。
->     + 而**代理模式**则强调要让别人帮你去做一些本身与你业务没有太多关系的职责（记录日志、设置缓存）代理模式是为了实现对象的控制，因为被代理的对象往往难以直接获得或者是其内部不想暴露出来。
+#### 5, What is the difference between decorative mode and proxy mode?
+> + Reference answer:
+> + The difference between decorator mode and proxy mode is that
+> + Both are **extensions on the methods of the class**, but the **decorator mode** emphasizes the enhancement itself, and after being decorated you can use the enhanced functionality on the enhanced class.
+> + **Proxy mode ** emphasizes that you want others to help you to do some responsibilities that do not have much to do with your business (logging, setting the cache). The proxy mode is to achieve object control, because the object being proxied It is often difficult to obtain directly or not to be exposed inside.
 
-#### 6、实现单例模式有几种方法 ？懒汉式中双层锁的目的是什么 ？两次判空的目的又是什么 ？
-> + 参考回答：
->   + 单例模式实现方法有多种：**饿汉，懒汉(线程安全，线程非安全)，双重检查(DCL),内部类，以及枚举**
->   + 所谓**双层检验锁（在加锁前后对实例对象进行两次判空的检验）**：加锁是为了第一次对象实例化的线程同步，而锁内还要有第二层判空是因为可能会有多个线程进入第一层if判断内部，而在加锁代码块外排队等候，如果锁内不进行第二次检验，仍然会出现实例化多个对象的情况。
-> + 推荐文章：
->   + [单例模式的总结](https://xxxblank.github.io/2017/09/14/singleTon/)
+#### 6. How many ways to implement singleton mode? What is the purpose of the double-layer lock in the lazy style? What is the purpose of the two judgments?
+> + Reference answer:
+> + Singleton mode implementation methods are available: ** hungry, lazy (thread safe, thread non-secure), double check (DCL), inner class, and enumeration**
+> + so-called ** double-layer test lock (testing the instance object twice before and after locking)**: Locking is for the first time the object is instantiated, and there is a second in the lock. The layer is empty because there may be multiple threads entering the first layer if the internal judgment, and waiting outside the lock code block, if the lock does not perform the second test, there will still be cases of instantiating multiple objects.
+> + Recommended articles:
+> + [Summary of Singleton Mode] (https://xxxblank.github.io/2017/09/14/singleTon/)
 
-#### 7、用到的一些开源框架，介绍一个看过源码的，内部实现过程。
-> + 参考回答：
->   + 面试常客：Okhttp，Retrofit，Glide，RxJava，GreenDao，Dagger等
-> + 推荐文章：
->   + [Android OkHttp源码解析入门教程（一）](https://juejin.im/post/5c46822c6fb9a049ea394510)
->   + [Android OkHttp源码解析入门教程（二）](https://juejin.im/post/5c4682d2f265da6130752a1d)
+#### 7, some open source frameworks used, introduce a source code, internal implementation process.
+> + Reference answer:
+> + Interview frequent visitors: Okhttp, Retrofit, Glide, RxJava, GreenDao, Dagger, etc.
+> + Recommended articles:
+> + [Android OkHttp source code analysis tutorial (1)] (https://juejin.im/post/5c46822c6fb9a049ea394510)
+> + [Android OkHttp source code analysis tutorial (2)] (https://juejin.im/post/5c4682d2f265da6130752a1d)
 
-#### 8、Fragment如果在Adapter中使用应该如何解耦？
-> + 参考回答：
->   + 接口回调
->   + 广播
+#### 8. How should Fragment be decoupled if used in Adapter?
+> + Reference answer:
+> + interface callback
+> + broadcast
 
-### Android进阶延伸点
+### Android advanced extension point
 
-#### 1、如何进行单元测试，如何保证App稳定 ？
-> + 参考回答：
->   + 要测试Android应用程序，通常会创建以下类型自动单元测试
->     + **本地测试**：只在本地机器JVM上运行，以最小化执行时间，这种单元测试不依赖于Android框架，或者即使有依赖，也很方便使用模拟框架来模拟依赖，以达到隔离Android依赖的目的，模拟框架如Google推荐的Mockito；
->     + [**Android官网-建立本地单元测试**](https://developer.android.com/training/testing/unit-testing/local-unit-tests.html)
->     + **检测测试**：真机或模拟器上运行的单元测试，由于需要跑到设备上，比较慢，这些测试可以访问仪器（Android系统）信息，比如被测应用程序的上下文，一般地，依赖不太方便通过模拟框架模拟时采用这种方式；
->     + [**Android官网-建立仪表单元测试**](https://developer.android.com/training/testing/unit-testing/instrumented-unit-tests.html)
->   + 注意：单元测试不适合测试复杂的UI交互事件
->   + 推荐文章：[Android 单元测试只看这一篇就够了](https://juejin.im/post/5b57e3fbf265da0f47352618)
->   + App的稳定主要决定于整体的系统架构设计，同时也不可忽略代码编程的细节规范，正所谓“千里之堤，溃于蚁穴”，一旦考虑不周，看似无关紧要的代码片段可能会带来整体软件系统的崩溃，所以上线之前除了自己**本地化测试**之外还需要进行**Monkey压力测试**
->   + 少部分面试官可能会延伸，如Gradle自动化测试、机型适配测试等
-    
-#### 2、Android中如何查看一个对象的回收情况 ？
-> + 参考回答：
->   + 首先要了解Java四种引用类型的场景和使用（强引用、软引用、弱引用、虛引用）
->   + 举个场景例子：**SoftReference**对象是用来保存软引用的，但它同时也是一个Java对象，所以当软引用对象被回收之后，虽然这个**SoftReference**对象的get方法返回null，但**SoftReference**对象本身并不是null，而此时这个**SoftReference**对象已经不再具有存在的价值，需要一个适当的清除机制，避免大量**SoftReference**对象带来的**内存泄露**
->   + 因此，Java提供**ReferenceQueue**来处理引用对象的回收情况。当**SoftReference**所引用的对象被GC后，**JVM**会先将**softReference**对象添加到**ReferenceQueue**这个队列中。当我们调用**ReferenceQueue的poll()方法**，如果这个队列中不是空队列，那么将返回并移除前面添加的那个Reference对象。
+#### 1. How to perform unit testing, how to ensure the stability of the app?
+> + Reference answer:
+> + To test Android apps, the following types of automated unit tests are usually created
+> + **Local Test**: Run only on the local machine JVM to minimize execution time. This unit test does not depend on the Android framework, or even if there is a dependency, it is convenient to use the simulation framework to simulate dependencies to achieve Isolating the purpose of Android dependencies, simulating frameworks such as Google's recommended Mockito;
+> + [**Android official website - build local unit test**] (https://developer.android.com/training/testing/unit-testing/local-unit-tests.html)
+> + **Test Test**: Unit test running on real machine or simulator, because it needs to run to the device, it is slow, these tests can access the instrument (Android system) information, such as the context of the application under test, generally Ground, it is not convenient to use this method when simulating through the simulation framework;
+> + [**Android official website - build meter unit test**] (https://developer.android.com/training/testing/unit-testing/instrumented-unit-tests.html)
+> + Note: Unit tests are not suitable for testing complex UI interaction events
+> + Recommended article: [Android unit test only see this one is enough] (https://juejin.im/post/5b57e3fbf265da0f47352618)
+> + App stability is mainly determined by the overall system architecture design, and can not ignore the detailed specification of code programming, the so-called "thousands of embankments, collapsed in the ant hole", once considered poorly, seemingly insignificant code fragments may Will bring the collapse of the overall software system, so in addition to their own ** localization test** before going online, you need to do **Monkey stress test**
+> + A small number of interviewers may be extended, such as Gradle automated testing, model adaptation testing, etc.
+    
+#### 2. How to view the recycling status of an object in Android?
+> + Reference answer:
+> + First understand the scenarios and uses of the four reference types of Java (strong references, soft references, weak references, virtual references)
+> + Give a scenario example: **SoftReference** object is used to save soft references, but it is also a Java object, so when the soft reference object is recycled, although the get method of this **SoftReference** object returns Null, but the **SoftReference** object itself is not null, and at this point the **SoftReference** object no longer has the value of existence, requires an appropriate cleanup mechanism, avoiding a large number of **SoftReference** objects **Memory leak**
+> + Therefore, Java provides **ReferenceQueue** to handle the recycling of referenced objects. When the object referenced by **SoftReference** is GC, **JVM** will first add the **softReference** object to the **ReferenceQueue** queue. When we call the poll() method of the **ReferenceQueue**, if the queue is not an empty queue, then the Reference object added earlier will be returned and removed.
 ![](https://user-gold-cdn.xitu.io/2019/3/27/169bd0c28741e8e0?w=1950&h=1058&f=png&s=262083)
-> + 推荐文章：
->   + [Java中的四种引用类型：强引用、软引用、弱引用和虚引用](https://segmentfault.com/a/1190000015282652#articleHeader3)
+> + Recommended articles:
+> + [Four reference types in Java: strong references, soft references, weak references, and virtual references] (https://segmentfault.com/a/1190000015282652#articleHeader3)
 
-#### 3、Apk的大小如何压缩 ？
-> + 参考回答：
->   + 一个完整APK包含以下目录（将APK文件拖到Android Studio）：
->     + **META-INF/**：包含**CERT.SF**和**CERT.RSA**签名文件以及**MANIFEST.MF** 清单文件。
->     + **assets/**：包含应用可以使用**AssetManager**对象检索的应用资源。
->     + **res/**：包含未编译到的资源 resources.arsc。
->     + **lib/**：包含特定于处理器软件层的编译代码。该目录包含了每种平台的子目录，像**armeabi，armeabi-v7a， arm64-v8a，x86，x86_64，和mips**。
->     + **resources.arsc**：包含已编译的资源。该文件包含**res/values/** 文件夹所有配置中的XML内容。打包工具提取此XML内容，将其编译为二进制格式，并将内容归档。此内容包括语言字符串和样式，以及直接包含在**resources.arsc*8文件中的内容路径 ，例如布局文件和图像。
->     + **classes.dex**：包含以**Dalvik / ART**虚拟机可理解的**DEX**文件格式编译的类。
->     + **AndroidManifest.xml**：包含核心Android清单文件。该文件列出应用程序的名称，版本，访问权限和引用的库文件。该文件使用Android的二进制XML格式。
+#### 3. How is the size of Apk compressed?
+> + Reference answer:
+> + A full APK contains the following directories (drag APK files to Android Studio):
+> + **META-INF/**: Contains the **CERT.SF** and **CERT.RSA** signature files and the **MANIFEST.MF** manifest file.
+> + **assets/**: Contains application resources that the app can retrieve using the **AssetManager** object.
+> + **res/**: Contains uncompiled resources resources.arsc.
+> + **lib/**: Contains compiled code specific to the processor software layer. This directory contains subdirectories for each platform, such as **armeabi, armeabi-v7a, arm64-v8a, x86, x86_64, and mips**.
+> + **resources.arsc**: Contains compiled resources. This file contains the XML content in all configurations of the **res/values/** folder. The packaging tool extracts this XML content, compiles it into a binary format, and archives the content. This content includes language strings and styles, as well as content paths that are directly included in the **resources.arsc*8 file, such as layout files and images.
+> + **classes.dex**: Contains classes compiled in the **DEX** file format understandable by the **Dalvik / ART** virtual machine.
+> + **AndroidManifest.xml**: Contains the core Android manifest file. This file lists the application's name, version, access rights, and referenced library files. This file uses Android's binary XML format.
 ![](https://user-gold-cdn.xitu.io/2019/3/27/169bd48e53be9928?w=1878&h=415&f=png&s=52339)
->     + lib、class.dex和res占用了超过90%的空间，所以这三块是优化Apk大小的重点（实际情况不唯一）
->   + **减少res，压缩图文文件**
->     + 图片文件压缩是针对jpg和png格式的图片。我们通常会放置多套不同分辨率的图片以适配不同的屏幕，这里可以进行适当的删减。在实际使用中，只保留一到两套就足够了（保留一套的话建议保留xxhdpi，两套的话就加上hdpi），然后再对剩余的图片进行压缩(jpg采用优图压缩，png尝试采用pngquant压缩)
->   + **减少dex文件大小**
->     + 添加资源混淆
+> + lib, class.dex and res take up more than 90% of the space, so these three are the focus of optimizing the Apk size (the actual situation is not unique)
+> + ** Reduce res, compress graphic files**
+> + Image file compression is for jpg and png images. We usually place multiple sets of images of different resolutions to fit different screens, and we can make appropriate cuts here. In actual use, it is enough to keep only one or two sets (if you keep one set, it is recommended to keep xxhdpi, if you add two sets, add hdpi), then compress the remaining pictures (jpg is optimized with MAP). Pngquant compression)
+> + **Reduce dex file size**
+> + Add resource confusion
 ![](https://user-gold-cdn.xitu.io/2019/3/27/169be5f6fe340e53?w=566&h=141&f=png&s=9307)
->     + shrinkResources为true表示移除未引用资源，和代码压缩协同工作。
->     + minifyEnabled为true表示通过ProGuard启用代码压缩，配合proguardFiles的配置对代码进行混淆并移除未使用的代码。
->     + 代码混淆在压缩apk的同时，也提升了安全性。
->     + 推荐文章：[Android混淆最佳实践](https://www.jianshu.com/p/cba8ca7fc36d)
->   + **减少lib文件大小**
->     + 由于引用了很多第三方库，lib文件夹占用的空间通常都很大，特别是有so库的情况下。很多so库会同时引入armeabi、armeabi-v7a和x86这几种类型，这里可以只保留armeabi或armeabi-v7a的其中一个就可以了，实际上微信等主流app都是这么做的。
->     + 只需在build.gradle直接配置即可，NDK配置同理
+> + shrinkResources is true to remove unreferenced resources and work with code compression.
+> + minifyEnabled to true means that code compression is enabled through ProGuard, confusing the code with the configuration of proguardFiles and removing unused code.
+> + Code confusing improves security while compressing apk.
+> + Recommended article: [Android Confusion Best Practices] (https://www.jianshu.com/p/cba8ca7fc36d)
+> + **Reduce lib file size**
+> + Since many third-party libraries are referenced, the lib folder usually takes up a lot of space, especially if there are so libraries. Many so libraries will introduce armeabi, armeabi-v7a and x86 at the same time. Here you can only keep one of armeabi or armeabi-v7a. In fact, mainstream apps such as WeChat do this.
+> + Just configure directly in build.gradle, NDK configuration is the same
 ![](https://user-gold-cdn.xitu.io/2019/3/27/169be64df0148df3?w=219&h=95&f=png&s=2712)
-> + 推荐文章：
->   + [APK瘦身](https://www.jianshu.com/p/5921e9561f5f)
+> + Recommended articles:
+> + [APK Slimming] (https://www.jianshu.com/p/5921e9561f5f)
 
-#### 4、如何通过Gradle配置多渠道包？
-> + 参考回答：
->   + 首先要了解设置多渠道的原因。在安装包中添加不同的标识，配合自动化埋点，应用在请求网络的时候携带渠道信息，方便后台做运营统计，比如说统计我们的应用在不同应用市场的下载量等信息
->   + 这里以友盟统计为例
->     + 首先在manifest.xml文件中设置动态渠道变量：
+#### 4. How to configure multi-channel package through Gradle?
+> + Reference answer:
+> + The first step is to understand the reasons for setting up multiple channels. Add different identifiers in the installation package, cooperate with the automatic burying point, and the application carries the channel information when requesting the network, which is convenient for the background to do operational statistics, for example, statistics on the download amount of our application in different application markets.
+> + Here is an example of Union League statistics
+> + First set the dynamic channel variable in the manifest.xml file:
 ![](https://user-gold-cdn.xitu.io/2019/3/28/169c30d0cdbfb111?w=486&h=103&f=png&s=7268)
->     + 接着在app目录下的build.gradle中配置productFlavors，也就是配置打包的渠道：
+> + Then configure productFlavors in the build.gradle in the app directory, which is to configure the packaged channels:
 ![](https://user-gold-cdn.xitu.io/2019/3/28/169c31116ef61848?w=661&h=356&f=png&s=41701)
->     + 最后在编辑器下方的Teminal输出命令行
->       + **执行./gradlew assembleRelease ，将会打出所有渠道的release包；**
->       + **执行./gradlew assembleVIVO，将会打出VIVO渠道的release和debug版的包；**
->       + **执行./gradlew assembleVIVORelease将生成VIVO的release包。**
-> + 推荐文章：
->   + [美团Android自动化之旅—Walle生成渠道包](https://github.com/Meituan-Dianping/walle)
+> + Finally the Teminal output command line below the editor
+> + **Execute ./gradlew assembleRelease and will release the release package for all channels;**
+> + **Execute ./gradlew assembleVIVO, which will release the release and debug packages of the VIVO channel;**
+> + **Execute ./gradlew assembleVIVORelease will generate the VIVO release package. **
+> + Recommended articles:
+> + [Meituan Android Automation Tour - Walle Generation Channel Pack] (https://github.com/Meituan-Dianping/walle)
 
-#### 5、插件化原理分析
-> + 参考回答：
->   + **插件化**是指将 APK 分为**宿主**和**插件**的部分。把需要实现的模块或功能当做一个独立的提取出来，在 APP 运行时，我们可以动态的**载入**或者**替换插件**部分，减少**宿主**的规模
->       + 宿主： 就是当前运行的APP。 
->       + 插件： 相对于插件化技术来说，就是要加载运行的apk类文件。
->   + 而**热修复**则是从修复bug的角度出发，强调的是在不需要二次安装应用的前提下修复已知的bug。能
+#### 5, plug-in principle analysis
+> + Reference answer:
+> + **Plug-in ** refers to the section that divides the APK into **host** and **plugins**. Think of the module or function that needs to be implemented as a separate extraction. When the APP is running, we can dynamically load or replace the plugin** part to reduce the size of the host**.
+> + Host: This is the currently running APP.
+> + Plugins: Relative to plugin technology, it is to load the running apk class files.
+> + and **Hot Fix** is based on fixing bugs, emphasizing the repair of known bugs without the need to install the application twice. can
 ![](https://user-gold-cdn.xitu.io/2019/4/7/169f6c21ae14fee0?w=1208&h=1134&f=jpeg&s=321789)
->   + **类加载机制**
->     + Android中常用的两种类加载器，**DexClassLoader**和**PathClassLoader**，它们都继承于**BaseDexClassLoader**，两者**区别**在于**PathClassLoader**只能加载**内部存储目录**的dex/jar/apk文件。**DexClassLoader**支持加载**指定目录**(不限于内部)的dex/jar/apk文件
->   + **插件通信**：通过给插件apk生成相应的DexClassLoader便可以访问其中的类，可分为单DexClassLoader和多DexClassLoader两种结构。
->     + 若使用**多ClassLoader机制**，主工程引用插件中类需要先通过插件的ClassLoader加载该类再通过**反射**调用其方法。插件化框架一般会通过统一的入口去管理对各个插件中类的访问，并且做一定的限制。
->     + 若使用**单ClassLoader机制**，主工程则可以**直接通过**类名去访问插件中的类。该方式有个弊端，若两个不同的插件工程引用了一个库的不同版本，则程序可能会出错。
->   + **资源加载**
->     + 原理在于通过反射将插件apk的路径加入AssetManager中并创建Resource对象加载资源，有两种处理方式：
->       + 合并式：addAssetPath时加入所有插件和主工程的路径；由于AssetManager中加入了所有插件和主工程的路径，因此生成的Resource可以同时访问插件和主工程的资源。但是由于主工程和各个插件都是独立编译的，生成的资源id会存在相同的情况，在访问时会产生资源冲突。
->       + 独立式：各个插件只添加自己apk路径，各个插件的资源是互相隔离的，不过如果想要实现资源的共享，必须拿到对应的Resource对象。
-> + 推荐文章：
->   + [Android动态加载技术 简单易懂的介绍方式](https://segmentfault.com/a/1190000004062866#articleHeader1)
->   + [深入理解Android插件化技术](https://yq.aliyun.com/articles/361233?utm_content=m_40296)
->   + [为什么要做热更新](https://www.cnblogs.com/baiqiantao/p/9160806.html)
+> + ** class loading mechanism**
+> + Two kinds of class loaders commonly used in Android, **DexClassLoader** and **PathClassLoader**, they all inherit from **BaseDexClassLoader**, the difference between the two is that **PathClassLoader** can only be loaded* * Internal storage directory ** dex / jar / apk file. **DexClassLoader** supports loading **specified directory** (not limited to internal) dex/jar/apk file
+> + **Plug-in communication**: You can access the classes by generating the corresponding DexClassLoader for the plug-in apk, which can be divided into single DexClassLoader and multiple DexClassLoader structures.
+> + If you use the **Multiple ClassLoader mechanism**, the main project reference plugin class needs to first load the class through the plugin's ClassLoader and then call its method via **reflection**. Plug-in frameworks generally manage access to classes in individual plug-ins through a unified portal and impose certain restrictions.
+> + If you use the **Single ClassLoader mechanism**, the main project can ** access the classes in the plugin directly through the ** class name. This approach has the drawback. If two different plug-in projects reference different versions of a library, the program may go wrong.
+> + **Resource loading**
+> + The principle is to add the path of the plugin apk to the AssetManager and create the Resource object to load the resource by reflection. There are two ways to handle it:
+> + Consolidation: addAssetPath adds all plugins and main project paths; since the AssetManager adds all plugins and main project paths, the generated Resource can access both the plugin and the main project resources. However, since the main project and each plug-in are compiled independently, the generated resource id will have the same situation, and a resource conflict will occur during the access.
+> + Stand-alone: ​​Each plug-in only adds its own apk path. The resources of each plug-in are isolated from each other, but if you want to share resources, you must get the corresponding Resource object.
+> + Recommended articles:
+> + [Android dynamic loading technology easy to understand introduction] (https://segmentfault.com/a/1190000004062866#articleHeader1)
+> + [In-depth understanding of Android plug-in technology] (https://yq.aliyun.com/articles/361233?utm_content=m_40296)
+> + [Why do hot updates] (https://www.cnblogs.com/baiqiantao/p/9160806.html)
 
-#### 6、组件化原理
-> + 参考回答：
->   + **引入组件化的原因**：项目随着需求的增加规模变得越来越大，规模的增大导致了各种业务错中复杂的交织在一起, 每个业务模块之间，代码没有约束，带来了代码边界的模糊，代码冲突时有发生, 更改一个小问题可能引起一些新的问题, 牵一发而动全身，增加一个新需求，需要熟悉相关的代码逻辑，增加开发时间
->     + **避免重复造轮子，可以节省开发和维护的成本。**
->     + **可以通过组件和模块为业务基准合理地安排人力，提高开发效率。**
->     + **不同的项目可以共用一个组件或模块，确保整体技术方案的统一性。**
->     + **为未来插件化共用同一套底层模型做准备。**
->   + **组件化开发流程**就是把一个功能完整的App或模块拆分成**多个子模块（Module）**，每个子模块可以**独立编译运行**，也可以任意组合成另一个新的 App或模块，每个模块即不相互依赖但又可以相互交互，但是最终发布的时候是将这些组件合并统一成一个apk，遇到某些特殊情况甚至可以**升级**或者**降级**
->   + 举个简单的模型例子
-![APP架构图](https://user-gold-cdn.xitu.io/2019/4/7/169f692c69f60c06?w=932&h=806&f=png&s=39959)
-![APP代码结构图](https://user-gold-cdn.xitu.io/2019/4/7/169f690af8eea279?w=716&h=750&f=png&s=214708)
-App是主application，ModuleA和ModuleB是两个业务模块（**相对独立，互不影响**），Library是基础模块，包含所有模块需要的依赖库，以及一些工具类：如网络访问、时间工具等
->    + **注意：提供给各业务模块的基础组件，需要根据具体情况拆分成 aar 或者 library，像登录，基础网络层这样较为稳定的组件，一般直接打包成 aar，减少编译耗时。而像自定义 View 组件，由于随着版本迭代会有较多变化，就直接以源码形式抽离成 Library**
-> + 推荐文章：
->   + [干货 | 从智行 Android 项目看组件化架构实践](https://mp.weixin.qq.com/s?__biz=MjM5MDI3MjA5MQ==&mid=2697268363&idx=1&sn=3db2dce36a912936961c671dd1f71c78&scene=21#wechat_redirect)
+#### 6, componentization principle
+> + Reference answer:
+> + ** Reasons for introducing componentization**: Projects become larger and larger as demand increases, and the increase in scale leads to complex intertwining of various business errors, between each business module. The code is not constrained, causing the blurring of the code boundaries, code conflicts sometimes occur, changing a small problem may cause some new problems, pulling the whole body, adding a new requirement, need to be familiar with the relevant code logic, increase development time
+> + ** Avoid re-creating wheels and save development and maintenance costs. **
+> + ** It is possible to rationally arrange manpower for business benchmarks through components and modules to improve development efficiency. **
+> + **Different projects can share a single component or module to ensure uniformity of the overall technical solution. **
+> + ** Prepare for the future plug-in to share the same set of underlying models. **
+> + **Componentized development process** is to split a fully functional App or module into **Multiple Modules**, each submodule can be compiled and run **, or can be arbitrarily combined Another new app or module, each module does not depend on each other but can interact with each other, but when it is finally released, these components are combined into one apk, and in some special cases, it can even be upgraded** or **downgrade**
+> + Give a simple model example
+![APP Architecture Diagram] (https://user-gold-cdn.xitu.io/2019/4/7/169f692c69f60c06?w=932&h=806&f=png&s=39959)
+![APP code structure diagram] (https://user-gold-cdn.xitu.io/2019/4/7/169f690af8eea279?w=716&h=750&f=png&s=214708)
+App is the main application, ModuleA and ModuleB are two business modules (** relatively independent, do not affect each other **), Library is the basic module, contains the dependent libraries required by all modules, and some tool classes: such as network access, time tools Wait
+> + **Note: The basic components provided to each business module need to be split into aar or library according to the specific situation. For example, the more stable components such as login and basic network layer are generally packaged directly into aar, which reduces the compilation time. And like the custom View component, because there will be more changes with the iteration of the version, it will be directly separated into the Library by source code**
+> + Recommended articles:
+> + [Dry goods | See the component architecture practice from the Zhixing Android project] (https://mp.weixin.qq.com/s?__biz=MjM5MDI3MjA5MQ==&mid=2697268363&idx=1&sn=3db2dce36a912936961c671dd1f71c78&scene=21#wechat_redirect)
 
 
-#### 7、跨组件通信
-> + 参考回答：
->   + **跨组件通信场景：**
->     + 第一种是组件之间的页面跳转 (Activity 到 Activity, Fragment 到 Fragment, Activity 到 Fragment, Fragment 到 Activity) 以及跳转时的数据传递 (基础数据类型和可序列化的自定义类类型)。
->     + 第二种是组件之间的自定义类和自定义方法的调用(组件向外提供服务)。
->   + **跨组件通信方案分析**：
->     + 第一种**组件之间的页面跳转**实现简单，跳转时想传递不同类型的数据提供有相应的 API即可。
->     + 第二种组件之间的自定义类和**自定义方法的调用**要稍微复杂点，需要 ARouter 配合架构中的 公共服务(CommonService) 实现：
->       + 提供服务的业务模块：
->       + 在公共服务(CommonService) 中声明 Service 接口 (含有需要被调用的自定义方法), 然后在自己的模块中实现这个 Service 接口, 再通过 ARouter API 暴露实现类。
->       + 使用服务的业务模块：
->         + 通过 ARouter 的 API 拿到这个 Service 接口(多态持有, 实际持有实现类), 即可调用 Service 接口中声明的自定义方法, 这样就可以达到模块之间的交互。
->       + 此外，可以使用 AndroidEventBus 其独有的 Tag, 可以在开发时更容易定位发送事件和接受事件的代码, 如果以组件名来作为 Tag 的前缀进行分组, 也可以更好的统一管理和查看每个组件的事件, 当然也不建议大家过多使用 EventBus。
->   + **如何管理过多的路由表？**
->     + RouterHub 存在于基础库, 可以被看作是所有组件都需要遵守的通讯协议, 里面不仅可以放路由地址常量, 还可以放跨组件传递数据时命名的各种 Key 值, 再配以适当注释, 任何组件开发人员不需要事先沟通只要依赖了这个协议, 就知道了各自该怎样协同工作, 既提高了效率又降低了出错风险, 约定的东西自然要比口头上说强。
->     + Tips: 如果您觉得把每个路由地址都写在基础库的 RouterHub 中, 太麻烦了, 也可以在每个组件内部建立一个私有 RouterHub, 将不需要跨组件的路由地址放入私有 RouterHub 中管理, 只将需要跨组件的路由地址放入基础库的公有 RouterHub 中管理, 如果您不需要集中管理所有路由地址的话, 这也是比较推荐的一种方式。
->   + **ARouter路由原理：**
->     + ARouter维护了一个路由表Warehouse，其中保存着全部的模块跳转关系，ARouter路由跳转实际上还是调用了startActivity的跳转，使用了原生的Framework机制，只是通过apt注解的形式制造出跳转规则，并人为地拦截跳转和设置跳转条件。
->  + 常见的组件化方案如下
+#### 7, cross-component communication
+> + Reference answer:
+> + **Cross-component communication scenario:**
+> + The first is page jumps between components (Activity to Activity, Fragment to Fragment, Activity to Fragment, Fragment to Activity) and data transfer at jump (basic data types and serializable custom class types) ).
+> + The second is a call between a custom class and a custom method between components (the component provides services out).
+> + ** Cross-component communication scenario analysis**:
+> + The page jump between the first ** components ** is simple to implement, you want to pass different types of data when you provide a corresponding API.
+> + The custom class between the second component and the call to the **custom method** are slightly more complicated and require the ARouter to work with the public service (CommonService) in the schema:
+> + Business module for providing services:
+> + Declare the Service interface (containing the custom method that needs to be called) in the public service (CommonService), then implement the Service interface in its own module, and expose the implementation class through the ARouter API.
+> + Business module using the service:
+> + Get the Service interface (polymorphic hold, actually hold the implementation class) through the ARouter API, you can call the custom method declared in the Service interface, so that the interaction between the modules can be achieved.
+> + In addition, you can use AndroidEventBus' unique tag, which makes it easier to locate the code for sending events and accepting events during development. If you group the component names as the prefix of the tag, you can better manage and view each. The events of the components, of course, do not recommend excessive use of EventBus.
+> + ** How to manage too many routing tables? **
+> + RouterHub exists in the base library and can be seen as a communication protocol that all components need to comply with. It can not only put routing address constants, but also various Key values ​​named when passing data across components, with appropriate comments. Any component developer does not need to communicate in advance. As long as they rely on this protocol, they know how to work together, which not only improves efficiency but also reduces the risk of error. The agreed things are naturally stronger than verbal.
+> + Tips: If you feel that it is too much trouble to write each routing address in the RouterHub of the base library, you can also create a private RouterHub inside each component, which will not need to put the routing address across components into the private RouterHub. Management, only the routing addresses that need to be cross-components are placed in the public RouterHub of the base repository. This is also a recommended method if you do not need to centrally manage all routing addresses.
+> + **ARouter routing principle: **
+> + ARouter maintains a routing table Warehouse, which holds all the module jump relationships. The ARouter route jump actually calls the startActivity jump. It uses the native Framework mechanism, but only creates the jump by apt annotation. Transfer rules and artificially intercept jumps and set jump conditions.
+> + Common componentization schemes are as follows
 ![](https://user-gold-cdn.xitu.io/2019/4/7/169f6a3d472ef431?w=1828&h=945&f=png&s=615437)
 
-#### 8、组件化中路由、埋点的实现
-> + 参考回答：
->    + 因为在组件化中，各个业务模块之间是各自**独立**的, 并不会存在相互依赖的关系, 所以一个业务模块是访问不了其他业务模块的代码的, 如果想从 A 业务模块的 A 页面跳转到 B 业务模块的 B 页面, 光靠模块自身是不能实现的，这就需要一种跨组件通信方案—— **路由（Router）**
->    + **路由**主要有以下两种场景:
->      + 第一种是**组件之间的页面跳转** (Activity 到 Activity, Fragment 到 Fragment, Activity 到 Fragment, Fragment 到 Activity) 以及跳转时的数据传递 (基础数据类型和可序列化的自定义类类型)
->      + 第二种是**组件之间的自定义类**和**自定义方法的调用**(组件向外提供服务)
->    + 其**原理**在于将分布在不同组件module中的某些类按照一定规则生成映射表（数据结构通常是Map，Key为一个字符串，Value为类或对象），然后在需要用到的时候从映射表中根据字符串从映射表中取出类或对象，本质上是类的查找
->    + 埋点则是在应用中特定的流程收集一些信息，用来跟踪应用使用的状况
->      + **代码埋点**：在某个事件发生时调用SDK里面相应的接口发送埋点数据，百度统计、友盟、TalkingData、Sensors Analytics等第三方数据统计服务商大都采用这种方案
->      + **全埋点**：全埋点指的是将Web页面/App内产生的所有的、满足某个条件的行为，全部上报到后台服务器
->      + **可视化埋点**：通过可视化工具（例如Mixpanel）配置采集节点，在Android端自动解析配置并上报埋点数据，从而实现所谓的**自动埋点**
->      + **无埋点**：它并不是真正的不需要埋点，而是Android端自动采集全部事件并上报埋点数据，在后端数据计算时过滤出有用数据
-> + 推荐文章：
->   + [安卓组件化开源方案实现](https://juejin.im/post/5a7ab8846fb9a0634514a2f5)
+#### 8. Implementation of routing and burying points in componentization
+> + Reference answer:
+> + Because in the componentization, each business module is independent of each other, and there is no interdependent relationship, so a business module can not access the code of other business modules, if you want to from A business The A page of the module jumps to the B page of the B business module, which cannot be implemented by the module itself. This requires a cross-component communication scheme - **Router **
+> + **Route** There are two main scenarios:
+> + The first is ** page jump between components ** (Activity to Activity, Fragment to Fragment, Activity to Fragment, Fragment to Activity) and data transfer at jump (basic data types and serializable Custom class type)
+> + The second is the call between the custom class ** and ** custom methods between the components** (the component provides services out)
+> + Its principle ** is to generate a mapping table according to certain rules of some classes distributed in different component modules (data structure is usually Map, Key is a string, Value is a class or object), and then needed When you get the class or object from the mapping table according to the string from the mapping table, it is essentially the class lookup.
+> + Buried points are collected in the specific process of the application to track the status of the application.
+> + ** Code Buried Point**: When a certain event occurs, the corresponding interface in the SDK is called to send the buried point data. Baidu Statistics, Union, TalkingData, Sensors Analytics and other third-party data statistics service providers mostly adopt this scheme.
+> + ** Full Buried Point**: Full Buried Point refers to all the behaviors that are generated in the Web Page/App and satisfy certain conditions, all reported to the background server.
+> + **Visualization Buried Point**: Configure the collection node through a visualization tool (such as Mixpanel), automatically parse the configuration on the Android side and report the buried point data to achieve the so-called ** automatic burying point**
+> + **No burying point**: It is not really no need to bury the point, but the Android side automatically collects all events and reports buried data, filtering out useful data in the back-end data calculation.
+> + Recommended articles:
+> + [Android componentized open source solution implementation] (https://juejin.im/post/5a7ab8846fb9a0634514a2f5)
 
-#### 9、Hook以及插桩技术
-> + 参考回答：
->   + **Hook**是一种用于**改变API执行结果**的技术，能够将系统的API函数执行**重定向**（应用的**触发事件**和**后台逻辑处理**是根据事件流程一步步地向下执行。而**Hook**的意思，就是在事件传送到终点前截获并监控事件的传输，像个钩子钩上事件一样，并且能够在钩上事件时，处理一些自己特定的事件，例如逆向破解App）
+#### 9, Hook and instrumentation
+> + Reference answer:
+> + **Hook** is a technique for **changing API execution results**, able to perform system **redirect** (application's **trigger event** and **background logic) Processing** is performed step by step according to the event flow. **Hook** means intercepting and monitoring the transmission of events before the event is delivered to the destination, like a hook hook event, and can be hooked When dealing with events, handle some specific events of your own, such as reverse cracking the app)
 ![](https://user-gold-cdn.xitu.io/2019/4/17/16a2a2f8cf3e4448?w=625&h=211&f=png&s=14871)
->   +  Android 中的 Hook 机制，大致有两个方式：
->      +  要 root 权限，直接 Hook 系统，可以干掉所有的 App。
->      +  无 root 权限，但是只能 Hook 自身app，对系统其它 App 无能为力。
->   +  **插桩**是以静态的方式修改第三方的代码，也就是从编译阶段，对源代码（中间代码）进行编译，而后重新打包，是**静态的篡改**； 而**Hook**则不需要再编译阶段修改第三方的源码或中间代码，是在运行时通过反射的方式修改调用，是一种**动态的篡改**
-> + 推荐文章：
->   + [Android插件化原理解析——Hook机制之动态代理](http://weishu.me/2016/01/28/understand-plugin-framework-proxy-hook/)
->   + [android 插桩基本概念](https://blog.csdn.net/fei20121106/article/details/51879047)
->   + [Android逆向之旅](http://www.520monkey.com/)
+> + Hook mechanism in Android, there are roughly two ways:
+> + For root privileges, direct Hook system, you can kill all apps.
+> + No root privileges, but only Hook own app, can't do anything for other apps in the system.
+> + **Insert ** is to modify the third-party code in a static way, that is, compile the source code (intermediate code) from the compile stage, and then repackage it, it is ** static tampering**; and * *Hook** does not need to recompile the third-party source code or intermediate code in the compile stage. It is a modification of the call by reflection at runtime, which is a kind of **dynamic tampering**
+> + Recommended articles:
+> + [Android plug-in principle analysis - dynamic proxy of Hook mechanism] (http://weishu.me/2016/01/28/understand-plugin-framework-proxy-hook/)
+> + [android plugging basic concept] (https://blog.csdn.net/fei20121106/article/details/51879047)
+> + [Android Reverse Journey] (http://www.520monkey.com/)
 
-#### 10、Android的签名机制？
-> + 参考回答：
->   + Android的签名机制包含有**消息摘要**、**数字签名**和**数字证书**
->     + **消息摘要**：在消息数据上，执行一个单向的 Hash 函数，生成一个固定长度的Hash值
->     + **数字签名**：一种以电子形式存储消息签名的方法，一个完整的数字签名方案应该由两部分组成：**签名算法和验证算法**
->     + **数字证书**：一个经证书授权（Certificate Authentication）中心数字签名的包含公钥拥有者信息以及公钥的文件
-> + 推荐文章：
->   + [一篇文章看明白 Android v1 & v2 签名机制](https://blog.csdn.net/freekiteyu/article/details/84849651)
+#### 10, Android's signature mechanism?
+> + Reference answer:
+> + Android's signature mechanism includes **Message Summary**, **Digital Signature** and **Digital Certificate**
+> + **Message Summary**: On the message data, execute a one-way Hash function to generate a fixed-length hash value
+> + **Digital Signature**: A method of storing message signatures in electronic form. A complete digital signature scheme should consist of two parts: **Signature Algorithm and Verification Algorithm**
+> + **Digital Certificate**: A digitally signed document containing the public key owner information and the public key signed by the Certificate Authentication Center
+> + Recommended articles:
+> + [An article to understand Android v1 & v2 signature mechanism] (https://blog.csdn.net/freekiteyu/article/details/84849651)
 
-#### 11、v3签名key和v2还有v1有什么区别
-> + 参考回答：
->   + 在**v1版本**的签名中，签名以文件的形式存在于apk包中，这个版本的apk包就是一个标准的zip包，**V2**和**V1**的差别是**V2**是对整个zip包进行签名，而且在zip包中增加了一个**apk signature block**，里面保存签名信息。
+#### 11, What is the difference between v3 signature key and v2 and v1?
+> + Reference answer:
+> + In the signature of **v1 version**, the signature exists in the apk package as a file. This version of the apk package is a standard zip package. The difference between **V2** and **V1** is **V2** is to sign the entire zip package, and a **apk signature block** is added to the zip package, which stores the signature information.
 ![](https://user-gold-cdn.xitu.io/2019/4/1/169d7c3ea2437de3?w=1692&h=520&f=png&s=77618)
->   + **v2版本**签名块（APK Signing Block）本身又主要分成三部分:
->     + **SignerData**（签名者数据）：主要包括签名者的证书，整个APK完整性校验hash，以及一些必要信息
->     + **Signature**（签名）：开发者对SignerData部分数据的签名数据
->     + **PublicKey**（公钥）：用于验签的公钥数据
->   + **v3版本**签名块也分成同样的三部分，与v2不同的是在SignerData部分，v3新增了attr块，其中是由更小的level块组成。每个level块中可以存储一个证书信息。前一个level块证书验证下一个level证书，以此类推。最后一个level块的证书，要符合SignerData中本身的证书，即用来签名整个APK的公钥所属于的证书
+> + **v2 version ** Signing Block itself is mainly divided into three parts:
+> + **SignerData** (Signer Data): mainly includes the signer's certificate, the entire APK integrity check hash, and some necessary information
+> + **Signature** (Signature): Developer's signature data for the SignerData part of the data
+> + **PublicKey** (public key): public key data for verification
+> + **v3 version** The signature block is also divided into the same three parts. Unlike v2, in the SignerData section, v3 adds the attr block, which consists of smaller level blocks. A certificate information can be stored in each level block. The previous level block certificate verifies the next level certificate, and so on. The certificate of the last level block must conform to the certificate in SignerData itself, that is, the certificate to which the public key used to sign the entire APK belongs.
 ![](https://user-gold-cdn.xitu.io/2019/4/1/169d7c5908d3c159?w=1643&h=1790&f=png&s=101056)
-> + 推荐文章：
->   + [APK 签名方案 v3](https://source.android.google.cn/security/apksigning/v3)
->   + [Android P v3签名新特性](https://xuanxuanblingbling.github.io/ctf/android/2018/12/30/signature/)
+> + Recommended articles:
+> + [APK Signature Scheme v3] (https://source.android.google.com/security/apksigning/v3)
+> + [Android P v3 Signature New Features] (https://xuanxuanblingbling.github.io/ctf/android/2018/12/30/signature/)
 
-#### 12、Android5.0~10.0之间大的变化
-> + 参考回答：
->   + **Android5.0新特性**
->     + **MaterialDesign设计风格**
->     + **支持64位ART虚拟机**（5.0推出的ART虚拟机，在5.0之前都是Dalvik。他们的区别是：Dalvik,每次运行,字节码都需要通过即时编译器转换成机器码(JIT)。 ART,第一次安装应用的时候,字节码就会预先编译成机器码(AOT)）
->     + 通知详情可以用户自己设计
->   + **Android6.0新特性**
->     + **动态权限管理**
->     + 支持快速充电的切换
->     + 支持文件夹拖拽应用
->     + 相机新增专业模式
->   + **Android7.0新特性**
->     + **多窗口支持**
->     + **V2签名**
->     + 增强的Java8语言模式
->     + 夜间模式
->   + **Android8.0（O）新特性**
->     + **优化通知**：通知渠道 (Notification Channel) 通知标志 休眠 通知超时 通知设置 通知清除
->     + **画中画模式**：清单中Activity设置android:supportsPictureInPicture
->     + **后台限制**
->     + 自动填充框架
->     + 系统优化
->     + 等等优化很多
->   + **Android9.0（P）新特性**
->     + **室内WIFI定位**
->     + **“刘海”屏幕支持**
->     + 安全增强
->     + 等等优化很多
->   + **Android10.0（Q）新特性**
->     + **夜间模式**：包括手机上的所有应用都可以为其设置暗黑模式。
->     + **桌面模式**：提供类似于PC的体验，但是远远不能代替PC。
->     + **屏幕录制**：通过长按“电源”菜单中的"屏幕快照"来开启。
-> + 推荐文章：
->   + [Android Developers 官方文档](https://developer.android.com/guide/topics/manifest/uses-sdk-element.html#ApiLevels)
+#### 12, big change between Android5.0~10.0
+> + Reference answer:
+> + **Android5.0 new features**
+> + **MaterialDesign design style**
+> + **Support for 64-bit ART virtual machine** (5.0 launched ART virtual machine, Dalvik before 5.0. The difference is: Dalvik, every time you run, bytecode needs to be converted to machine by just-in-time compiler Code (JIT). ART, when the application is first installed, the bytecode is pre-compiled into machine code (AOT).
+> + Notification details can be designed by users themselves
+> + **Android6.0 new features**
+> + **Dynamic Rights Management**
+> + Support fast charging switching
+> + Support folder drag and drop application
+> + Camera added professional mode
+> + **Android7.0 new features**
+> + **Multi-window support**
+> + **V2 Signature**
+> + Enhanced Java8 language mode
+> + night mode
+> + **Android8.0(O) new features**
+> + **Optimization Notification**: Notification Channel Notification Flag Sleep Notification Timeout Notification Settings Notification Clear
+> + **Picture in Picture Mode**: Activity settings in the list android:supportsPictureInPicture
+> + **Background restrictions**
+> + Auto Fill Frame
+> + System Optimization
+> + etc. Optimize a lot
+> + **Android9.0(P) new features**
+> + **Indoor WIFI positioning**
+> + ** "Liu Hai" screen support**
+> + Security Enhancement
+> + etc. Optimize a lot
+> + **Android10.0(Q) new features**
+> + **Night mode**: All applications on your phone can be set to Diagnostics mode.
+> + **Desktop Mode**: Provides a PC-like experience, but is far from a replacement for a PC.
+> + **Screen Recording**: Turns on by long pressing "Screenshot" in the "Power" menu.
+> + Recommended articles:
+> + [Android Developers Official Documentation] (https://developer.android.com/guide/topics/manifest/uses-sdk-element.html#ApiLevels)
 
-#### 13、说下Measurepec这个类
-> + 参考回答：
->   + 作用：通过宽测量值**widthMeasureSpec**和高测量值**heightMeasureSpec**决定View的大小
->   + 组成：一个32位int值，高2位代表**SpecMode**(测量模式)，低30位代表**SpecSize**( 某种测量模式下的规格大小)。
->   + 三种模式：
->     + **UNSPECIFIED**：父容器不对View有任何限制，要多大有多大。常用于系统内部。
->     + **EXACTLY**(精确模式)：父视图为子视图指定一个确切的尺寸SpecSize。对应LyaoutParams中的match_parent或具体数值。
->     + **AT_MOST**(最大模式)：父容器为子视图指定一个最大尺寸SpecSize，View的大小不能大于这个值。对应LayoutParams中的wrap_content。
->   + 决定因素：值由**子View的布局参数LayoutParams**和父容器的**MeasureSpec**值共同决定。具体规则见下图：![](https://user-gold-cdn.xitu.io/2019/4/1/169d7a649cc67de5?w=700&h=230&f=png&s=60337)
+#### 13, say Measurepec this class
+> + Reference answer:
+> + Function: Determine the size of the View by the wide measurement value **widthMeasureSpec** and the high measurement value**heightMeasureSpec**
+> + Composition: A 32-bit int value, the upper 2 bits represent **SpecMode** (measurement mode), and the lower 30 bits represent **SpecSize** (size in a certain measurement mode).
+> + Three modes:
+> + **UNSPECIFIED**: The parent container does not have any restrictions on View, how big it is. Often used inside the system.
+> + **EXACTLY** (Precision mode): The parent view specifies an exact size SpecSize for the child view. Corresponds to match_parent or specific value in LyaoutParams.
+> + **AT_MOST** (maximum mode): The parent container specifies a maximum size SpecSize for the child view, and the size of the View cannot be greater than this value. Corresponds to wrap_content in LayoutParams.
+> + Decisive factor: The value is determined by the layout parameter LayoutParams** of the ** child View and the **MeasureSpec** value of the parent container. The specific rules are as follows: ![](https://user-gold-cdn.xitu.io/2019/4/1/169d7a649cc67de5?w=700&h=230&f=png&s=60337)
 
-#### 14、请例举Android中常用布局类型，并简述其用法以及排版效率
-> + 参考回答：
->   + Android中常用布局分为**传统布局**和**新型布局**
->     + 传统布局（编写XML代码、代码生成）：
->       + **框架布局（FrameLayout）**：
->       + **线性布局（LinearLayout）**：
->       + **绝对布局（AbsoluteLayout）**：
->       + **相对布局（RelativeLayout）**：
->       + **表格布局（TableLayout）**：
->     + 新型布局（**可视化拖拽控件**、编写XML代码、代码生成）：
->       + **约束布局（ConstrainLayout）**：
+#### 14, please list the common layout types in Android, and briefly describe their usage and layout efficiency.
+> + Reference answer:
+> + Common layouts in Android are divided into **traditional layout** and **new layout**
+> + Traditional layout (writing XML code, code generation):
+> + **FrameLayout (FrameLayout)**:
+> + **LinearLayout**:
+> + **AbsoluteLayout**:
+> + ** Relative Layout (RelativeLayout)**:
+> + **TableLayout**:
+> + New layout (**Visual drag control**, writing XML code, code generation):
+> + **Constrained layout (ConstrainLayout)**:
 ![](https://user-gold-cdn.xitu.io/2019/4/18/16a2f8e1327c53b4?w=1220&h=950&f=png&s=183074)
->       + 注：图片出自Carson_Ho的[Android：常用布局介绍&属性设置大全](https://blog.csdn.net/carson_ho/article/details/51719519)
->     + 对于嵌套多层View而言，其排版效率：**LinearLayout = FrameLayout >> RelativeLayout**
+> + Note: The picture is from Carson_Ho [Android: Common Layout Introduction & Property Settings] (https://blog.csdn.net/carson_ho/article/details/51719519)
+> + For nested multi-layer View, its layout efficiency: **LinearLayout = FrameLayout >> RelativeLayout**
 
 #### 15. Differentiate the usage of Animation and Animator, and outline its principle.
 > + Reference answer:
