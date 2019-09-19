@@ -1092,55 +1092,55 @@ App是主application，ModuleA和ModuleB是两个业务模块（**相对独立�
 >       + 注：图片出自Carson_Ho的[Android：常用布局介绍&属性设置大全](https://blog.csdn.net/carson_ho/article/details/51719519)
 >     + 对于嵌套多层View而言，其排版效率：**LinearLayout = FrameLayout >> RelativeLayout**
 
-#### 15、区别Animation和Animator的用法，概述其原理
-> + 参考回答：
->   + **动画的种类**：前者只有**透明度**，**旋转**，**平移**，**伸缩**4种属性，而对于后者，只要是该控件的属性，且有setter该属性的方法就都可以对该属性执行一种**动态变化**的效果。
->   + **可操作的对象**：前者只能对**UI组件**执行动画，但属性动画几乎可以对**任何对象**执行动画（不管它是否显示在屏幕上）。
->   + **动画播放顺序**：在Animator中，AnimatorSet正是通过playTogether()、playSequentially()、animSet.play().with()、before()、after()这些方法来控制多个动画协同工作，从而做到对动画播放顺序的精确控制
+#### 15. Differentiate the usage of Animation and Animator, and outline its principle.
+> + Reference answer:
+> + **Types of animations**: The former only has **transparency**, **rotation**, **translation**, **scale** 4 attributes, and for the latter, as long as it is the property of the control And there is a way to set the property of this property to perform a **dynamic change** effect on the property.
+> + **Operable objects**: The former can only animate the **UI component**, but the property animation can animate almost any object** (regardless of whether it is displayed on the screen).
+> + **Animation play order**: In Animator, AnimatorSet controls multiple animations through playTogether(), playSequentially(), animSet.play().with(), before(), after() Work together to achieve precise control of the animation playback sequence
 ![](https://user-gold-cdn.xitu.io/2019/4/18/16a2fb2adc635679?w=1768&h=1670&f=png&s=380046)
 
-#### 16、使用过什么图片加载库？Glide的源码设计哪里很微妙？
-> + 参考回答：
->   + 图片加载库：**Fresco、Glide、Picasso**等
->   + Glide的设计微妙在于：
->     + **Glide的生命周期绑定**：可以控制图片的加载状态与当前页面的生命周期同步，使整个加载过程随着页面的状态而启动/恢复，停止，销毁
->     + **Glide的缓存设计**：通过（三级缓存，Lru算法，Bitmap复用）对Resource进行缓存设计
->     + **Glide的完整加载过程**：采用Engine引擎类暴露了一系列方法供Request操作
-> + 推荐文章：
->   + [Glide 源码分析](https://user-gold-cdn.xitu.io/2019/4/24/16a4ec49c3af1f5c)
+#### 16. What image loading library has you used? Where is Glide's source code design subtle?
+> + Reference answer:
+> + Image loading library: **Fresco, Glide, Picasso**, etc.
+> + The design of Glide is subtle:
+> + **Glide's lifecycle binding**: You can control the loading state of the image to synchronize with the life cycle of the current page, so that the entire loading process starts/resumes, stops, and destroys as the state of the page
+> + **Glide's Cache Design**: Caching the Resource by (L3 Cache, Lru Algorithm, Bitmap Reuse)
+> + **Glide's full loading process**: Exposing a series of methods for the Request operation using the Engine engine class
+> + Recommended articles:
+> + [Glide source code analysis] (https://user-gold-cdn.xitu.io/2019/4/24/16a4ec49c3af1f5c)
 
-#### 17、如何绕过9.0限制？
-> + 参考回答：
+#### 17, how to bypass the 9.0 limit?
+> + Reference answer:
 ![](https://user-gold-cdn.xitu.io/2019/4/19/16a33b0c703f615b?w=1267&h=542&f=png&s=67847)
 
-#### 18、用过哪些网络加载库？OkHttp、Retrofit实现原理？
-> + 参考回答：
->   + 网络加载库：OkHttp、Retrofit、xUtils、Volley等
-> + 推荐文章：
->   + [Android OkHttp源码解析入门教程（一）](https://juejin.im/post/5c46822c6fb9a049ea394510)
->   + [Android OkHttp源码解析入门教程（二）](https://juejin.im/post/5c4682d2f265da6130752a1d)
+#### 18. Which network loading libraries have you used? OkHttp, Retrofit implementation principle?
+> + Reference answer:
+> + Network loading library: OkHttp, Retrofit, xUtils, Volley, etc.
+> + Recommended articles:
+> + [Android OkHttp source code analysis tutorial (1)] (https://juejin.im/post/5c46822c6fb9a049ea394510)
+> + [Android OkHttp source code analysis tutorial (2)] (https://juejin.im/post/5c4682d2f265da6130752a1d)
 
-#### 19、对于应用更新这块是如何做的？ （灰度，强制更新、分区域更新）
-> + 参考回答：
->   + **内部更新**：
->     + 通过接口获取线上版本号，versionCode 
->     + 比较线上的versionCode 和本地的versionCode，弹出更新窗口 
->     + 下载APK文件（文件下载） 
->     + 安装APK
->   + **灰度更新**：
->     + 找单一渠道投放特别版本。 
->     + 做升级平台的改造，允许针对部分用户推送升级通知甚至版本强制升级。 
->     + 开放单独的下载入口。 
->     + 是两个版本的代码都打到app包里，然后在app端植入测试框架，用来控制显示哪个版本。测试框架负责与服务器端api通信，由服务器端控制app上A/B版本的分布，可以实现指定的一组用户看到A版本，其它用户看到B版本。服务端会有相应的报表来显示A/B版本的数量和效果对比。最后可以由服务端的后台来控制，全部用户在线切换到A或者B版本~
->     + **无论哪种方法都需要做好版本管理工作，分配特别的版本号以示区别。 当然，既然是做灰度，数据监控（常规数据、新特性数据、主要业务数据）还是要做到位，该打的数据桩要打。 还有，灰度版最好有收回的能力，一般就是强制升级下一个正式版。**
->   + **强制更新**：
->     + 一般的处理就是进入应用就弹窗通知用户有版本更新，弹窗可以没有取消按钮并不能取消。这样用户就只能选择更新或者关闭应用了，当然也可以添加取消按钮，但是如果用户选择取消则直接退出应用。
->   + **增量更新**：
->     + 二进制差分工具bsdiff是相应的补丁合成工具，根据两个不同版本的二进制文件，生成补丁文件.patch文件。通过bspatch使旧的apk文件与不定文件合成新的apk。 注意通过apk文件的md5值进行区分版本。
+#### 19. How is this for the application update? (Grayscale, forced update, sub-region update)
+> + Reference answer:
+> + **Internal Update**:
+> + Get the online version number through the interface, versionCode
+> + Compare online versionCode and local versionCode to pop up update window
+> + Download APK file (file download)
+> + Install APK
+> + **Grayscale update**:
+> + Find a special version for a single channel.
+> + Make upgrades to the upgrade platform, allowing upgrade notifications or even version upgrades for some users.
+> + Open a separate download portal.
+> + The two versions of the code are all in the app package, and then the test framework is embedded in the app to control which version is displayed. The test framework is responsible for communicating with the server-side API. The server-side controls the distribution of the A/B version on the app, so that a specified group of users can see the A version, and other users see the B version. The server will have a corresponding report to show the number and effect comparison of the A/B version. Finally, it can be controlled by the background of the server, and all users can switch to the A or B version online~
+> + ** Either way, you need to do a version management job, assign a special version number to show the difference. Of course, since it is grayscale, data monitoring (regular data, new characteristic data, main business data) is still in place, and the data pile to be played should be played. In addition, the gray version is best to have the ability to recover, generally it is forced to upgrade the next official version. **
+> + ** Forced update**:
+> + The general processing is to open the application and notify the user that there is a version update. The pop-up window can be cancelled without a cancel button. In this way, the user can only choose to update or close the application. Of course, the cancel button can also be added, but if the user chooses to cancel, the application is directly exited.
+> + **Incremental Update**:
+> + Binary Differential Tool bsdiff is the corresponding patch synthesis tool that generates patch file .patch files based on two different versions of binary files. The old apk file is combined with the indefinite file by bspatch to synthesize a new apk. Note that the version is differentiated by the md5 value of the apk file.
 
-#### 20、会用Kotlin、Fultter吗？ 谈谈你的理解
-> + 参考回答：
->   + Kotlin是一种具有类型推断的跨平台，静态类型的通用编程语言。 Kotlin旨在与Java完全互操作，其标准库的JVM版本依赖于Java类库，但类型推断允许其语法更简洁。
->   + Flutter是由Google创建的开源移动应用程序开发框架。它用于开发Android和iOS的应用程序，以及为Google Fuchsia创建应用程序的主要方法
->   + 关于kotlin的重要性，相信大家在日常开发可以体会到，应用到实际开发中，需要避免语法糖（例如单列模式、空值判断、高阶函数等）
->   + 至于Flutter，目前Google官方文档还不完善，市面上采用此语言编写的项目较少，如需要具体深入，请参考闲鱼和官方文档
+#### 20. Will you use Kotlin and Fultter? Talk about your understanding
+> + Reference answer:
+> + Kotlin is a cross-platform, statically typed general-purpose programming language with type inference. Kotlin is designed to be fully interoperable with Java, and the JVM version of its standard library relies on Java class libraries, but type inference allows for a cleaner syntax.
+> + Flutter is an open source mobile application development framework created by Google. It is used to develop Android and iOS apps, as well as the main method for creating apps for Google Fuchsia.
+> + About the importance of kotlin, I believe that everyone can understand in daily development, apply to the actual development, need to avoid syntactic sugar (such as single-column mode, null judgment, higher-order functions, etc.)
+> + As for Flutter, the official Google documentation is still not perfect. There are fewer projects written in this language on the market. If you need specific in-depth, please refer to the free fish and official documents.
